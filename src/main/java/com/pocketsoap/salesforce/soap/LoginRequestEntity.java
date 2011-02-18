@@ -21,9 +21,8 @@
 
 package com.pocketsoap.salesforce.soap;
 
-import java.io.IOException;
-
-import org.codehaus.plexus.util.xml.CompactXMLWriter;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 /**
  * A Login request.
@@ -39,14 +38,10 @@ public class LoginRequestEntity extends SoapRequestEntity {
 	private final CredentialsInfo credentials;
 	
 	@Override
-	protected void writeBody(CompactXMLWriter w) throws IOException {
-		
-		w.startElement("login");
-		w.addAttribute("xmlns", PARTNER_NS);
-		
-		writeElementString(w, "username", credentials.getUsername());
-		writeElementString(w, "password", credentials.getPassword());
-
-		w.endElement();//login
+	protected void writeBody(XMLStreamWriter w) throws XMLStreamException {
+		w.writeStartElement(PARTNER_NS, "login");
+		writeElementString(w, PARTNER_NS, "username", credentials.getUsername());
+		writeElementString(w, PARTNER_NS, "password", credentials.getPassword());
+		w.writeEndElement();//login
 	}
 }

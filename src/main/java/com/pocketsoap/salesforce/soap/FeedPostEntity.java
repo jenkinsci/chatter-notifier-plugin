@@ -21,9 +21,8 @@
 
 package com.pocketsoap.salesforce.soap;
 
-import java.io.IOException;
-
-import org.codehaus.plexus.util.xml.CompactXMLWriter;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 /**
  * A Create FeedPost request.
@@ -44,16 +43,15 @@ public class FeedPostEntity extends AuthenticatedRequestEntity {
 	private final String parentId, title, url, body;
 	
 	@Override
-	protected void writeBody(CompactXMLWriter w) throws IOException {
-		w.startElement("create");
-		w.addAttribute("xmlns", PARTNER_NS);
-		w.startElement("sobject");
-		writeElementString(w, "type", "FeedPost");
-		writeElementString(w, "parentId", parentId);
-		writeElementString(w, "LinkUrl", url);
-		writeElementString(w, "title", title);
-		writeElementString(w, "body", body);
-		w.endElement(); // sobject;
-		w.endElement(); // create
+	protected void writeBody(XMLStreamWriter w) throws XMLStreamException {
+		w.writeStartElement(PARTNER_NS, "create");
+		w.writeStartElement(PARTNER_NS, "sobject");
+		writeElementString(w, PARTNER_NS, "type", "FeedPost");
+		writeElementString(w, PARTNER_NS, "parentId", parentId);
+		writeElementString(w, PARTNER_NS, "LinkUrl", url);
+		writeElementString(w, PARTNER_NS, "title", title);
+		writeElementString(w, PARTNER_NS, "body", body);
+		w.writeEndElement(); // sobject;
+		w.writeEndElement(); // create
 	}
 }

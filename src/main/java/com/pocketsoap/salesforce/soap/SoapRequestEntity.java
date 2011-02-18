@@ -21,14 +21,15 @@
 
 package com.pocketsoap.salesforce.soap;
 
-import java.io.BufferedWriter;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 import org.apache.commons.httpclient.methods.RequestEntity;
-import org.codehaus.plexus.util.xml.CompactXMLWriter;
 
 /**
  * Base class for serializing a soap message into an HTTP Client request.
@@ -42,38 +43,48 @@ public abstract class SoapRequestEntity implements RequestEntity {
 	}
 	
 	static final String PARTNER_NS = "urn:partner.soap.sforce.com";
-			
+	static final String SOAP_NS = "http://schemas.xmlsoap.org/soap/envelope/";
+	
 	public final void writeRequest(OutputStream out) throws IOException {
-		Writer ws = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"), 1024);
-		CompactXMLWriter w = new CompactXMLWriter(ws);
-		w.startElement("Envelope");
-		w.addAttribute("xmlns", "http://schemas.xmlsoap.org/soap/envelope/");
-		if (hasHeaders()) {
-			w.startElement("Header");
-			writeHeaders(w);
-			w.endElement();
+		XMLOutputFactory f = XMLOutputFactory.newInstance();
+		try {
+			XMLStreamWriter w = f.createXMLStreamWriter(new BufferedOutputStream(out, 1024), "UTF-8");
+			w.writeStartDocument();
+			w.writeStartElement("s", "Envelope", SOAP_NS);
+			w.writeNamespace("s", SOAP_NS);
+			w.writeNamespace("p", PARTNER_NS);
+			w.setPrefix("p", PARTNER_NS);
+			w.setPrefix("s", SOAP_NS);
+			if (hasHeaders()) {
+				w.writeStartElement(SOAP_NS, "Header");
+				writeHeaders(w);
+				w.writeEndElement();
+			}
+			w.writeStartElement(SOAP_NS, "Body");
+			writeBody(w);
+			w.writeEndElement();//body
+			w.writeEndElement();//envelope
+			w.writeEndDocument();
+			w.close();
+		} catch (XMLStreamException e) {
+			throw new IOException("Error generating request xml", e);
 		}
-		w.startElement("Body");
-		writeBody(w);
-		w.endElement();//body
-		w.endElement();//envelope
-		ws.close();
 	}
 
-	protected void writeElementString(CompactXMLWriter w, String elementName, String elementValue) {
-		w.startElement(elementName);
-		w.writeText(elementValue);
-		w.endElement();
+	protected void writeElementString(XMLStreamWriter w, String elemNamespace, String elemName, String elemValue) throws XMLStreamException {
+		w.writeStartElement(elemNamespace, elemName);
+		w.writeCharacters(elemValue);
+		w.writeEndElement();
 	}
 	
 	protected boolean hasHeaders() {
 		return false;
 	}
 	
-	protected void writeHeaders(CompactXMLWriter w) throws IOException {
+	protected void writeHeaders(XMLStreamWriter w) throws XMLStreamException {
 	}
 	
-	protected abstract void writeBody(CompactXMLWriter w) throws IOException;
+	protected abstract void writeBody(XMLStreamWriter w) throws XMLStreamException;
 	
 	public long getContentLength() {
 		return -1;

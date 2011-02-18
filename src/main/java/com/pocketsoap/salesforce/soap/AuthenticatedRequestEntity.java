@@ -21,9 +21,8 @@
 
 package com.pocketsoap.salesforce.soap;
 
-import java.io.IOException;
-
-import org.codehaus.plexus.util.xml.CompactXMLWriter;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 
 /**
@@ -50,10 +49,9 @@ public abstract class AuthenticatedRequestEntity extends SoapRequestEntity {
 	}
 
 	@Override
-	protected void writeHeaders(CompactXMLWriter w) throws IOException {
-		w.startElement("SessionHeader");
-		w.addAttribute("xmlns", PARTNER_NS);
-		writeElementString(w, "sessionId", sid);
-		w.endElement();
+	protected void writeHeaders(XMLStreamWriter w) throws XMLStreamException {
+		w.writeStartElement(PARTNER_NS, "SessionHeader");
+		writeElementString(w, PARTNER_NS, "sessionId", sid);
+		w.writeEndElement();
 	}
 }

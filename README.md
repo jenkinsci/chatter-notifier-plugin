@@ -18,3 +18,5 @@ Goto the manage hudson page, manage plugins, and then the advanced tab, and pick
 With the plug-in installed, and the server restarted, the build configuration page will now have an extra option "Chatter Results", if you select this, then you can 
 populate the 4 fields as need (username, password and optional serverUrl to login to, and the recordId to post the results to, leave this blank to post to the users
 wall, or enter a record Id to post to that specific record (or group)).
+
+![build feed](http://www.pocketsoap.com/weblog/hc.png)

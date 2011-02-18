@@ -102,9 +102,6 @@ public class ChatterNotifier extends Notifier {
         String rootUrl = Hudson.getInstance().getRootUrl();
         String url = rootUrl == null ? null : rootUrl + build.getUrl();
         
-        ps.println("# " + title);
-        ps.println("# " + url);
- 
         String testHealth = null;
         AbstractTestResultAction<?> tr = build.getTestResultAction();
         if (tr != null) {
@@ -116,15 +113,11 @@ public class ChatterNotifier extends Notifier {
         	}
         	testHealth = th.toString();
         }
-        if (testHealth != null)
-        	ps.print(testHealth);
-        
-        ps.println("###");
         
         try {
         	new ChatterClient(username, password, server).postBuild(recordId, title, url, testHealth);
         } catch (Exception ex) {
-        	ps.print("error : " + ex.getMessage());
+        	ps.print("error posting to chatter : " + ex.getMessage());
         }
         return true;
     }

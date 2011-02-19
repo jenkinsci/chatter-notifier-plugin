@@ -9,8 +9,11 @@
 
   <groupId>com.pocketsoap</groupId>
   <artifactId>ChatterPlugin</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0</version>
   <packaging>hpi</packaging>
+  <name>Chatter plugin</name>
+  <description>Post your build result to Chatter</description>
+  <url>https://github.com/superfell/HudsonChatterPlugin</url>
 
   <!-- get every artifact through maven.glassfish.org, which proxies all the artifacts that we need -->
   <repositories>

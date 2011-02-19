@@ -46,13 +46,28 @@ public class ChatterClient {
 
 	private final CredentialsInfo credentials;
 	private SessionInfo session;
-	
+
 	public void postBuild(String recordId, String title, String resultsUrl, String testHealth) throws IOException, XMLStreamException, FactoryConfigurationError {
+		postBuild(recordId, title, resultsUrl, testHealth, true);
+	}
+	
+	private void postBuild(String recordId, String title, String resultsUrl, String testHealth, boolean retryOnInvalidSession) throws IOException, XMLStreamException, FactoryConfigurationError {
 		establishSession();
 		String body = testHealth == null ? title : title + "\n" + testHealth;
 		String pid = recordId == null || recordId.length() == 0 ? session.userId : recordId;
-		createFeedPost(pid, title, resultsUrl, body);
-		
+		try {
+			createFeedPost(pid, title, resultsUrl, body);
+		} catch (SoapFaultException ex) {
+			// if we were using a cached session, then it could of expired
+			// by now, so we check for INVALID_SESSION, and if we see that
+			// error, we'll flush the session cache and try again.
+			if (retryOnInvalidSession && ex.getFaultCode().equalsIgnoreCase("INVALID_SESSION")) {
+				SessionCache.get().revoke(credentials);
+				postBuild(recordId, title, resultsUrl, testHealth, false);
+				return;
+			}
+			throw ex;
+		}
 	}
 	
 	void establishSession() throws IOException, XMLStreamException, FactoryConfigurationError {

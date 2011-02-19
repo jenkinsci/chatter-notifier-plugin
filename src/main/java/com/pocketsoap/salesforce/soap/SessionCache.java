@@ -21,7 +21,6 @@
 
 package com.pocketsoap.salesforce.soap;
 
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -47,14 +46,6 @@ public class SessionCache {
 		sessions.remove(k);
 	}
 
-	// this is not cheap if the session cache is large.
-	public void revoke(SessionInfo s) {
-		for (Map.Entry<CredentialsInfo, SessionInfo> e : sessions.entrySet()) {
-			if (e.getValue().equals(s))
-				sessions.remove(e.getKey());
-		}
-	}
-	
 	public void add(CredentialsInfo c, SessionInfo s) {
 		sessions.put(c,s);
 	}

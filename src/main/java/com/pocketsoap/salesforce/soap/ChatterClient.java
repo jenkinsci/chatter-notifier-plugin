@@ -22,6 +22,8 @@
 package com.pocketsoap.salesforce.soap;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLInputFactory;
@@ -38,7 +40,7 @@ import org.apache.commons.httpclient.methods.RequestEntity;
  */
 public class ChatterClient {
 
-	public ChatterClient(String username, String password, String loginServerUrl) {
+	public ChatterClient(String username, String password, String loginServerUrl) throws MalformedURLException {
 		this.credentials = new CredentialsInfo(username, password, loginServerUrl);
 	}
 
@@ -66,7 +68,7 @@ public class ChatterClient {
 	private static final String SF_NS = "urn:partner.soap.sforce.com";
 	
 	SessionInfo performLogin() throws IOException, XMLStreamException, FactoryConfigurationError {
-		return makeSoapRequest(this.credentials.getLoginServerUrl() + "/services/Soap/u/21.0", new LoginRequestEntity(credentials), new LoginResponseParser());
+		return makeSoapRequest(new URL(this.credentials.getLoginServerUrl(), "/services/Soap/u/21.0"), new LoginRequestEntity(credentials), new LoginResponseParser());
 	}
 	
 	SaveResult createFeedPost(String recordId, String title, String url, String testHealth) throws XMLStreamException, IOException {
@@ -122,6 +124,10 @@ public class ChatterClient {
 			return new SessionInfo(sid, instanceUrl, userId);
 		}
 	}
+
+	private <T> T makeSoapRequest(URL serverUrl, RequestEntity req, ResponseParser<T> respParser) throws XMLStreamException, IOException {
+		return makeSoapRequest(serverUrl.toString(), req, respParser);
+	}
 	
 	private <T> T makeSoapRequest(String serverUrl, RequestEntity req, ResponseParser<T> respParser) throws XMLStreamException, IOException {
 		PostMethod post = new PostMethod(serverUrl);
@@ -130,7 +136,8 @@ public class ChatterClient {
 
 		HttpClient http = new HttpClient();
 		int sc = http.executeMethod(post);
-		System.out.println("request to " + post.getURI() + " returned " + sc);
+		if (sc != 200 && sc != 500)
+			throw new IOException("request to " + serverUrl + " returned unexpected HTTP status code of " + sc + ", check configuration.");
 		
 		XMLInputFactory f = XMLInputFactory.newInstance();
 		f.setProperty(XMLInputFactory.IS_COALESCING, Boolean.TRUE);

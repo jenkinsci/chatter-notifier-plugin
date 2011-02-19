@@ -21,6 +21,9 @@
 
 package com.pocketsoap.salesforce.soap;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 /**
  * Container class for credential sets.
  * 
@@ -28,19 +31,31 @@ package com.pocketsoap.salesforce.soap;
  */
 public class CredentialsInfo {
 
-	public CredentialsInfo(String username, String password, String loginServerUrl) {
+	public CredentialsInfo(String username, String password, String loginServerUrl) throws MalformedURLException {
 		this.username = username;
 		this.password = password;
-		this.serverUrl = loginServerUrl == null || loginServerUrl.length() == 0 ? "https://login.salesforce.com" : loginServerUrl;
+		this.serverUrl = normalizeServerUrl(loginServerUrl);
 	}
+	
+	private final String username, password;
+	private final URL serverUrl;
 
-	private final String username, password, serverUrl;
-
+	private static final String DEFAULT_SERVER_URL = "https://login.salesforce.com/";
+	
+	// url can be null, or can be an invalid URL, or could contain a path, if there's a path we need to strip it off
+	// if url is null, we need to default it.
+	private URL normalizeServerUrl(String url) throws MalformedURLException {
+		if (url != null) url = url.trim();
+		if (url == null || url.length() == 0) url = DEFAULT_SERVER_URL;
+		URL u = new URL(url);
+		return new URL(u, "/");
+	}
+	
 	public String getUsername() {
 		return username;
 	}
 	
-	public String getLoginServerUrl() {
+	public URL getLoginServerUrl() {
 		return serverUrl;
 	}
 	

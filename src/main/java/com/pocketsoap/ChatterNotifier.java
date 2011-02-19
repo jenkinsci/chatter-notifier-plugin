@@ -36,12 +36,9 @@ import hudson.tasks.junit.CaseResult;
 import hudson.tasks.test.AbstractTestResultAction;
 import hudson.util.FormValidation;
 
-import java.io.IOException;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-
-import javax.servlet.ServletException;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -117,6 +114,8 @@ public class ChatterNotifier extends Notifier {
         }
         
         try {
+        	// even though we do form validation in the descriptor, the user is still allowed
+        	// to save an invalid config, so we can't assume these values are good.
         	new ChatterClient(username, password, server).postBuild(recordId, title, url, testHealth);
         } catch (Exception ex) {
         	ps.print("error posting to chatter : " + ex.getMessage());

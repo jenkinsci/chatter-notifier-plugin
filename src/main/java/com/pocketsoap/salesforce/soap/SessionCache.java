@@ -39,10 +39,6 @@ public class SessionCache {
 	
 	private final ConcurrentHashMap<CredentialsInfo, SessionInfo> sessions = new ConcurrentHashMap<CredentialsInfo, SessionInfo>();
 	
-	public SessionInfo getCachedSessionInfo(String username, String password, String serverUrl) {
-		return getCachedSessionInfo(new CredentialsInfo(username, password, serverUrl));
-	}
-	
 	public SessionInfo getCachedSessionInfo(CredentialsInfo c) {
 		return sessions.get(c);
 	}

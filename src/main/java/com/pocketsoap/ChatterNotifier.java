@@ -34,18 +34,10 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.test.AbstractTestResultAction;
-import hudson.util.FormValidation;
 
-import java.io.IOException;
 import java.io.PrintStream;
 
-import javax.servlet.ServletException;
-
-import net.sf.json.JSONObject;
-
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
 
 import com.pocketsoap.salesforce.soap.ChatterClient;
 
@@ -127,7 +119,7 @@ public class ChatterNotifier extends Notifier {
 	}
 
 	/**
-	 * Descriptor for {@link TSLPublisher}. Used as a singleton. The class is
+	 * Descriptor for {@link ChatterNotifier}. Used as a singleton. The class is
 	 * marked as public so that it can be accessed from views.
 	 * 
 	 * <p>
@@ -136,59 +128,17 @@ public class ChatterNotifier extends Notifier {
 	 */
 	@Extension
 	public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-        /**
-         * To persist global configuration information,
-         * simply store it in a field and call save().
-         *
-         * <p>
-         * If you don't want fields to be persisted, use <tt>transient</tt>.
-         */
-        private boolean useFrench;
 
-        /**
-         * Performs on-the-fly validation of the form field 'name'.
-         *
-         * @param value
-         *      This parameter receives the value that the user has typed.
-         * @return
-         *      Indicates the outcome of the validation. This is sent to the browser.
-         */
-        public FormValidation doCheckName(@QueryParameter String value) throws IOException, ServletException {
-            if(value.length()==0)
-                return FormValidation.error("Please set a name");
-            if(value.length()<4)
-                return FormValidation.warning("Isn't the name too short?");
-            return FormValidation.ok();
-        }
-
+		@Override
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             // indicates that this builder can be used with all kinds of project types 
             return true;
         }
 
-        /**
-         * This human readable name is used in the configuration screen.
-         */
-        public String getDisplayName() {
+        /** This human readable name is used in the configuration screen. */
+		@Override
+		public String getDisplayName() {
             return "Chatter Results";
-        }
-
-        @Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            // To persist global configuration information,
-            // set that to properties and call save().
-            useFrench = formData.getBoolean("useFrench");
-            // ^Can also use req.bindJSON(this, formData);
-            //  (easier when there are many fields; need set* methods for this, like setUseFrench)
-            save();
-            return super.configure(req,formData);
-        }
-
-        /**
-         * This method returns true if the global configuration says we should speak French.
-         */
-        public boolean useFrench() {
-            return useFrench;
         }
 	}
 }

@@ -15,10 +15,10 @@
   <f:entry title="Password" field="password">
     <f:password />
   </f:entry>
-  <f:entry title="recordId" field="recordId" help="Id of record to chatter to (e.g. a group, or a custom object), leave blank to chatter to users wall">
+  <f:entry title="recordId" field="recordId">
     <f:textbox />
   </f:entry>
-  <f:entry title="Override Login Server" field="server" help="Enter URL of alternative login server, e.g. https://test.salesforce.com">
+  <f:entry title="Override Login Server" field="server">
     <f:textbox />
   </f:entry>
   

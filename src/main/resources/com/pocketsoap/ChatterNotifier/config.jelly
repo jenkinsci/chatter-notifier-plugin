@@ -22,4 +22,8 @@
     <f:textbox />
   </f:entry>
   
+  <f:validateButton
+   title="Verify Settings" progress="Verifying Settings ..."
+   method="testConnection" with="username,password,recordId,server" />
+   
 </j:jelly>

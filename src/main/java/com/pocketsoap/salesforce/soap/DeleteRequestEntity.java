@@ -18,21 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
 // THE SOFTWARE.
 //
-
 package com.pocketsoap.salesforce.soap;
 
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
+
 /**
+ * A delete request in the salesforce soap api.
+ * 
  * @author superfell
  */
-public class SaveResult {
+public class DeleteRequestEntity extends AuthenticatedRequestEntity {
 
-	SaveResult(boolean success, String id, String statusCode, String errorMessage) {
-		this.success = success;
+	// the delete API call will take upto 200 Ids, but we only need one for now.
+	DeleteRequestEntity(String sessionId, String id) {
+		super(sessionId);
 		this.id = id;
-		this.statusCode = statusCode;
-		this.errorMessage = errorMessage;
 	}
 	
-	public final String id, statusCode, errorMessage;
-	public final boolean success;
+	private final String id;
+	
+	@Override
+	protected void writeBody(XMLStreamWriter w) throws XMLStreamException {
+		w.writeStartElement(PARTNER_NS, "delete");
+		writeElementString(w, PARTNER_NS, "id", id);
+		w.writeEndElement(); // delete
+	}
 }

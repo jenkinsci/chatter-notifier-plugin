@@ -18,21 +18,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
 // THE SOFTWARE.
 //
-
 package com.pocketsoap.salesforce.soap;
 
 /**
+ * Used to map failures returned in SaveResult into an exception.
+ * 
  * @author superfell
+ *
  */
-public class SaveResult {
+public class SaveResultException extends RuntimeException {
+	
+	private static final long serialVersionUID = 1L;
 
-	SaveResult(boolean success, String id, String statusCode, String errorMessage) {
-		this.success = success;
-		this.id = id;
-		this.statusCode = statusCode;
-		this.errorMessage = errorMessage;
+	SaveResultException(SaveResult sr) {
+		super(sr.statusCode + " :"  + sr.errorMessage);
+		this.saveResult = sr;
 	}
 	
-	public final String id, statusCode, errorMessage;
-	public final boolean success;
+	private final SaveResult saveResult;
+	
+	public SaveResult getSaveResult() {
+		return saveResult;
+	}
 }

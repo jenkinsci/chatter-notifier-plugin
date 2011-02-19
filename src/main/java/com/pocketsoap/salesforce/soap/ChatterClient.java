@@ -35,6 +35,8 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
 
 /**
+ * This class handles all the API calls to Salesforce/Chatter using the SOAP API.
+ * This just implements the miniumum set of calls we need, not the entire API.
  * 
  * @author superfell
  */
@@ -47,24 +49,33 @@ public class ChatterClient {
 	private final CredentialsInfo credentials;
 	private SessionInfo session;
 
-	public void postBuild(String recordId, String title, String resultsUrl, String testHealth) throws IOException, XMLStreamException, FactoryConfigurationError {
-		postBuild(recordId, title, resultsUrl, testHealth, true);
+	public String postBuild(String recordId, String title, String resultsUrl, String testHealth) throws IOException, XMLStreamException, FactoryConfigurationError {
+		return postBuild(recordId, title, resultsUrl, testHealth, true);
 	}
 	
-	private void postBuild(String recordId, String title, String resultsUrl, String testHealth, boolean retryOnInvalidSession) throws IOException, XMLStreamException, FactoryConfigurationError {
+	public void delete(String id) throws XMLStreamException, IOException {
+		establishSession();
+		// SaveResult is the same as DeleteResult.
+		SaveResult r = makeSoapRequest(session.instanceServerUrl,
+				new DeleteRequestEntity(session.sessionId, id),
+				new SaveResultParser());
+		if (!r.success)
+			throw new SaveResultException(r);
+	}
+	
+	private String postBuild(String recordId, String title, String resultsUrl, String testHealth, boolean retryOnInvalidSession) throws IOException, XMLStreamException, FactoryConfigurationError {
 		establishSession();
 		String body = testHealth == null ? title : title + "\n" + testHealth;
 		String pid = recordId == null || recordId.length() == 0 ? session.userId : recordId;
 		try {
-			createFeedPost(pid, title, resultsUrl, body);
+			return createFeedPost(pid, title, resultsUrl, body);
 		} catch (SoapFaultException ex) {
 			// if we were using a cached session, then it could of expired
 			// by now, so we check for INVALID_SESSION, and if we see that
 			// error, we'll flush the session cache and try again.
 			if (retryOnInvalidSession && ex.getFaultCode().equalsIgnoreCase("INVALID_SESSION")) {
 				SessionCache.get().revoke(credentials);
-				postBuild(recordId, title, resultsUrl, testHealth, false);
-				return;
+				return postBuild(recordId, title, resultsUrl, testHealth, false);
 			}
 			throw ex;
 		}
@@ -72,22 +83,23 @@ public class ChatterClient {
 	
 	void establishSession() throws IOException, XMLStreamException, FactoryConfigurationError {
 		SessionInfo s = SessionCache.get().getCachedSessionInfo(credentials);
-		if (s == null) {
-			s = performLogin();
-			SessionCache.get().add(credentials, s);
-		}
+		if (s == null)  s = performLogin();
 		session = s;
 	}
 	
 	private static final String SOAP_NS = "http://schemas.xmlsoap.org/soap/envelope/";
 	private static final String SF_NS = "urn:partner.soap.sforce.com";
 	
-	SessionInfo performLogin() throws IOException, XMLStreamException, FactoryConfigurationError {
-		return makeSoapRequest(new URL(this.credentials.getLoginServerUrl(), "/services/Soap/u/21.0"), new LoginRequestEntity(credentials), new LoginResponseParser());
+	public SessionInfo performLogin() throws IOException, XMLStreamException, FactoryConfigurationError {
+		SessionInfo si = makeSoapRequest(new URL(this.credentials.getLoginServerUrl(), "/services/Soap/u/21.0"), new LoginRequestEntity(credentials), new LoginResponseParser());
+		SessionCache.get().add(credentials, si);
+		return si;
 	}
 	
-	SaveResult createFeedPost(String recordId, String title, String url, String testHealth) throws XMLStreamException, IOException {
-		return makeSoapRequest(session.instanceServerUrl, new FeedPostEntity(session.sessionId, recordId, title, url, testHealth), new SaveResultParser());
+	String createFeedPost(String recordId, String title, String url, String testHealth) throws XMLStreamException, IOException {
+		SaveResult sr = makeSoapRequest(session.instanceServerUrl, new FeedPostEntity(session.sessionId, recordId, title, url, testHealth), new SaveResultParser());
+		if (sr.success) return sr.id;
+		throw new SaveResultException(sr);
 	}
 	
 	private static abstract class ResponseParser<T> {
@@ -101,7 +113,10 @@ public class ChatterClient {
 		@Override
 		SaveResult parse(XMLStreamReader rdr) throws XMLStreamException {
 			String id = null, sc = null, msg = null;
-			rdr.require(XMLStreamReader.START_ELEMENT, SF_NS, "createResponse");
+			boolean success = false;
+			rdr.require(XMLStreamReader.START_ELEMENT, SF_NS, null);
+			if (!rdr.getLocalName().endsWith("Response"))
+				throw new XMLStreamException("expected element named *Response but was " + rdr.getLocalName(), rdr.getLocation());
 			rdr.nextTag();
 			rdr.require(XMLStreamReader.START_ELEMENT, SF_NS, "result");
 			while (rdr.next() != XMLStreamReader.END_DOCUMENT) {
@@ -113,9 +128,13 @@ public class ChatterClient {
 						sc = rdr.getElementText();
 					else if (ln.equals("message")) 
 						msg = rdr.getElementText();
+					else if (ln.equals("success")) {
+						String v = rdr.getElementText();
+						success = v.equals("1") || v.equalsIgnoreCase("true");
+					}
 				}
 			}
-			return new SaveResult(id, sc, msg);
+			return new SaveResult(success, id, sc, msg);
 		}
 	}
 	

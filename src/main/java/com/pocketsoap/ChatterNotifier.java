@@ -187,5 +187,35 @@ public class ChatterNotifier extends Notifier {
 			}
 			return FormValidation.ok();
 		}
+		
+		public FormValidation doTestConnection(
+				@QueryParameter("username") String username,
+				@QueryParameter("password") String password,
+				@QueryParameter("recordId") String recordId,
+				@QueryParameter("server") String server) {
+
+			try {
+				ChatterClient c = new ChatterClient(username, password, server);
+				try {
+					c.performLogin();
+				} catch (Exception ex) {
+					return FormValidation.error("Unable to verify username/password : " + ex.getMessage());
+				}
+				String postId = null;
+				try {
+					postId = c.postBuild(recordId, null, null, "temporary post to verify setup");
+				} catch (Exception ex) {
+					return FormValidation.error("Unable to post to chatter : " + ex.getMessage());
+				}
+				try {
+					c.delete(postId);
+				} catch (Exception ex) {
+					return FormValidation.error("Unable to remove post from chatter : " + ex.getMessage());
+				}
+				return FormValidation.ok("success!");
+			} catch (MalformedURLException e) {
+				return FormValidation.error("Malformed server URL : " + e.getMessage());
+			}
+		}
 	}
 }

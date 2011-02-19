@@ -72,6 +72,7 @@ public abstract class SoapRequestEntity implements RequestEntity {
 	}
 
 	protected void writeElementString(XMLStreamWriter w, String elemNamespace, String elemName, String elemValue) throws XMLStreamException {
+		if (elemValue == null) return;
 		w.writeStartElement(elemNamespace, elemName);
 		w.writeCharacters(elemValue);
 		w.writeEndElement();

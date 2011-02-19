@@ -34,10 +34,17 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.test.AbstractTestResultAction;
+import hudson.util.FormValidation;
 
+import java.io.IOException;
 import java.io.PrintStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import javax.servlet.ServletException;
 
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import com.pocketsoap.salesforce.soap.ChatterClient;
 
@@ -58,7 +65,7 @@ public class ChatterNotifier extends Notifier {
 	}
 
 	/**
-	 * We’ll use this from the <tt>config.jelly</tt>.
+	 * We'll use this from the <tt>config.jelly</tt>.
 	 */
 	public String getUsername() {
 		return username;
@@ -73,6 +80,9 @@ public class ChatterNotifier extends Notifier {
 		return server;
 	}
 	
+	// we'll run after being finalized, and not look at previous results
+	// so we don't need any locking here, this'll let us be used safely
+	// from a concurrent build.
 	public BuildStepMonitor getRequiredMonitorService() {
 		return BuildStepMonitor.NONE;
 	}
@@ -140,5 +150,43 @@ public class ChatterNotifier extends Notifier {
 		public String getDisplayName() {
             return "Chatter Results";
         }
+		
+		public FormValidation doCheckUsername(@QueryParameter String value) {
+            if(value.length()==0)
+                return FormValidation.error("Please enter a username");
+            if(value.indexOf('@') == -1)
+                return FormValidation.warning("Username's usually have an @ in them, e.g. hudson@example.org");
+            return FormValidation.ok();
+        }
+		
+		public FormValidation doCheckPassword(@QueryParameter String value) {
+            if(value.length()==0)
+                return FormValidation.error("Please enter a password");
+            return FormValidation.ok();
+		}
+		
+		public FormValidation doCheckRecordId(@QueryParameter String value) {
+			int l = value.length();
+			if (l == 0 || l == 15 || l == 18)
+				return FormValidation.ok();
+			return FormValidation.error("recordId should be blank, or should be a valid Salesforce.com recordId, e.g. 0F930000000PCJP");
+		}
+		
+		public FormValidation doCheckServer(@QueryParameter String value) {
+			if (value.length() == 0)
+				return FormValidation.ok();
+			
+			try {
+				URL u = new URL(value);
+				String h = u.getHost().toLowerCase();
+				if (!(h.endsWith(".salesforce.com") || h.endsWith(".force.com")))
+					return FormValidation.warning("Are you sure this is the correct URL, this doesn't appear to be a Salesforce.com server");
+				if (u.getProtocol().equalsIgnoreCase("http"))
+					return FormValidation.warning("Are you sure you want to use HTTP, its recommended to use HTTPS");
+			} catch (MalformedURLException e) {
+				return FormValidation.error("please enter a valid URL, e.g. https://test.salesforce.com");
+			}
+			return FormValidation.ok();
+		}
 	}
 }

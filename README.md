@@ -7,6 +7,7 @@ This is a plugin for Hudson/Jenkins that will post build build results to a Chat
 
 The plugin is built with Maven, same as Hudson itself, simply clone to repo and run mvn install, the generated plugin ChatterPlugin.hdi will be in the target directory.
 
+If you don't want to build from the source, there's a prebuilt version of the plugin available in the downloads section.
 
 # Install
 

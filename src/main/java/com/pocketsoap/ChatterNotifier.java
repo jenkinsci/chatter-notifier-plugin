@@ -25,6 +25,7 @@ import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.Action;
 import hudson.model.BuildListener;
+import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
@@ -52,13 +53,15 @@ import com.pocketsoap.salesforce.soap.ChatterClient;
 public class ChatterNotifier extends Notifier {
 	
 	private final String username, password, recordId, server;
-
+	private final boolean failureOnly;
+	
 	@DataBoundConstructor
-	public ChatterNotifier(String username, String password, String recordId, String server) {
+	public ChatterNotifier(String username, String password, String recordId, String server, boolean failureOnly) {
 		this.username = username;
 		this.password = password;
 		this.recordId = recordId;
 		this.server = server;
+		this.failureOnly = failureOnly;
 	}
 
 	/**
@@ -75,6 +78,9 @@ public class ChatterNotifier extends Notifier {
 	}
 	public String getServer() {
 		return server;
+	}
+	public boolean getFailureOnly() {
+		return failureOnly;
 	}
 	
 	// we'll run after being finalized, and not look at previous results
@@ -95,9 +101,11 @@ public class ChatterNotifier extends Notifier {
 	 */
 	@Override
 	public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener) {
-        PrintStream ps = listener.getLogger();
+		if (this.failureOnly && build.getResult() == Result.SUCCESS)
+			return true;
 
-        String title = "Build: " + build.getProject().getName() + " " + build.getDisplayName() + " is " + build.getResult().toString();
+        PrintStream ps = listener.getLogger();
+		String title = "Build: " + build.getProject().getName() + " " + build.getDisplayName() + " is " + build.getResult().toString();
         String rootUrl = Hudson.getInstance().getRootUrl();
         String url = rootUrl == null ? null : rootUrl + build.getUrl();
         

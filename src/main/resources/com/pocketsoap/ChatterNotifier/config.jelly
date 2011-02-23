@@ -21,6 +21,9 @@
   <f:entry title="Override Login Server" field="server">
     <f:textbox />
   </f:entry>
+  <f:entry title="Chatter only on failure" field="failureOnly">
+	<f:checkbox />
+  </f:entry>
   
   <f:validateButton
    title="Verify Settings" progress="Verifying Settings ..."

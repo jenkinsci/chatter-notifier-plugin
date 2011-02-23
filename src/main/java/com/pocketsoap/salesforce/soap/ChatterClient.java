@@ -66,6 +66,7 @@ public class ChatterClient {
 	private String postBuild(String recordId, String title, String resultsUrl, String testHealth, boolean retryOnInvalidSession) throws IOException, XMLStreamException, FactoryConfigurationError {
 		establishSession();
 		String body = testHealth == null ? title : title + "\n" + testHealth;
+		if (body.length() > 1000) body = body.substring(0, 998) + "\u2026";	// ...
 		String pid = recordId == null || recordId.length() == 0 ? session.userId : recordId;
 		try {
 			return createFeedPost(pid, title, resultsUrl, body);

@@ -9,7 +9,7 @@
 
   <groupId>com.pocketsoap</groupId>
   <artifactId>ChatterPlugin</artifactId>
-  <version>1.0</version>
+  <version>1.1</version>
   <packaging>hpi</packaging>
   <name>Chatter plugin</name>
   <description>Post your build result to Chatter</description>

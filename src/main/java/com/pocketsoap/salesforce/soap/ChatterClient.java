@@ -74,7 +74,7 @@ public class ChatterClient {
 			// if we were using a cached session, then it could of expired
 			// by now, so we check for INVALID_SESSION, and if we see that
 			// error, we'll flush the session cache and try again.
-			if (retryOnInvalidSession && ex.getFaultCode().equalsIgnoreCase("INVALID_SESSION")) {
+			if (retryOnInvalidSession && ex.getFaultCode().toLowerCase().contains("session")) {
 				SessionCache.get().revoke(credentials);
 				return postBuild(recordId, title, resultsUrl, testHealth, false);
 			}

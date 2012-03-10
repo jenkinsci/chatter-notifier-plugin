@@ -21,9 +21,19 @@
 
 package com.pocketsoap.salesforce.soap;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLInputFactory;
@@ -41,7 +51,6 @@ import org.apache.commons.httpclient.methods.RequestEntity;
  * @author superfell
  */
 public class ChatterClient {
-
 	public ChatterClient(String username, String password, String loginServerUrl) throws MalformedURLException {
 		this.credentials = new CredentialsInfo(username, password, loginServerUrl);
 	}
@@ -49,8 +58,8 @@ public class ChatterClient {
 	private final CredentialsInfo credentials;
 	private SessionInfo session;
 
-	public String postBuild(String recordId, String title, String resultsUrl, String testHealth) throws IOException, XMLStreamException, FactoryConfigurationError {
-		return postBuild(recordId, title, resultsUrl, testHealth, true);
+	public String postBuild(String recordId, String title, String resultsUrl, String testHealth, Map<String, String> suspects) throws IOException, XMLStreamException, FactoryConfigurationError {
+		return postBuild(recordId, title, resultsUrl, testHealth, suspects, true);
 	}
 	
 	public void delete(String id) throws XMLStreamException, IOException {
@@ -63,23 +72,105 @@ public class ChatterClient {
 			throw new SaveResultException(r);
 	}
 	
-	private String postBuild(String recordId, String title, String resultsUrl, String testHealth, boolean retryOnInvalidSession) throws IOException, XMLStreamException, FactoryConfigurationError {
+	private String postBuild(String recordId, String title, String resultsUrl, String testHealth, Map<String, String> suspects, boolean retryOnInvalidSession) throws IOException, XMLStreamException, FactoryConfigurationError {
 		establishSession();
 		String body = testHealth == null ? title : title + "\n" + testHealth;
 		if (body.length() > 1000) body = body.substring(0, 998) + "\u2026";	// ...
+		
+
 		String pid = recordId == null || recordId.length() == 0 ? session.userId : recordId;
 		try {
-			return createFeedPost(pid, title, resultsUrl, body);
+			String postId = createSoapFeedPost(pid, title, resultsUrl, body);
+			if (suspects != null && !suspects.isEmpty()) {
+				postSuspectsComment(postId, suspects, true);
+			}
+			return postId;
 		} catch (SoapFaultException ex) {
 			// if we were using a cached session, then it could of expired
 			// by now, so we check for INVALID_SESSION, and if we see that
 			// error, we'll flush the session cache and try again.
 			if (retryOnInvalidSession && ex.getFaultCode().toLowerCase().contains("session")) {
 				SessionCache.get().revoke(credentials);
-				return postBuild(recordId, title, resultsUrl, testHealth, false);
+				return postBuild(recordId, title, resultsUrl, testHealth, suspects, false);
 			}
 			throw ex;
 		}
+	}
+	
+
+	private String postSuspectsComment(String postId,  Map<String, String> suspects, boolean retryOnInvalidSession)
+			throws MalformedURLException, IOException, XMLStreamException,
+			FactoryConfigurationError {
+		URL instanceUrl = new URL(session.instanceServerUrl);
+		//String the -api off the host
+		URL url = new URL(instanceUrl.getProtocol(),
+				instanceUrl.getHost().replaceAll("-api", ""), instanceUrl.getPort(), 
+				"/services/data/v24.0/chatter/feed-items/" + postId + "/comments");
+		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+		try {
+			conn.setRequestMethod("POST");
+			conn.setDoOutput(true);
+			conn.setDoInput(true);
+			conn.setRequestProperty("Content-Type", "application/json");
+			conn.setRequestProperty("Accept", "application/json");
+			conn.setRequestProperty("Authorization", "OAuth " + session.sessionId); 
+
+
+			OutputStream bodyStream = conn.getOutputStream();
+			Writer bodyWriter = new BufferedWriter(new OutputStreamWriter(bodyStream));
+			
+			bodyWriter.write("{\"body\":{\"messageSegments\":[");
+			writeTextSegment(bodyWriter, "Suspects: ");
+			Iterator<Entry<String, String>> it = suspects.entrySet().iterator();
+			while (it.hasNext()) {
+				Entry<String, String> ids = it.next();
+
+				bodyWriter.write(",");
+				String sfdcId = ids.getValue();
+				if (sfdcId == null) { //not mapped
+					writeTextSegment(bodyWriter, ids.getKey());
+				} else {
+					writeMentionSegment(bodyWriter, sfdcId);
+				}
+
+				if (it.hasNext()) {
+					writeTextSegment(bodyWriter, ", ");
+				}
+			}
+
+			bodyWriter.write("]}}");
+			bodyWriter.close();
+			conn.getInputStream().close(); //Don't care about the response
+		} catch (IOException e) {
+			if (retryOnInvalidSession && conn.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+				SessionCache.get().revoke(credentials);
+				return postSuspectsComment(postId, suspects, false);
+			}
+			
+			BufferedReader r = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+			String error = "";
+			String line ;
+			while ((line = r.readLine()) != null) {
+				error += line + '\n';
+			}
+			System.out.println(error);
+			throw e;
+		}
+		return null;
+	}
+
+	private void writeTextSegment(Writer bodyWriter, String txt)
+			throws IOException {
+		bodyWriter.write("{\"type\":\"Text\",\"text\":\"");
+		bodyWriter.write(txt);
+		bodyWriter.write("\"}");
+	}
+		
+	private void writeMentionSegment(Writer bodyWriter, String id)
+			throws IOException {
+		bodyWriter.write("{\"type\":\"Mention\",\"id\":\"");
+		bodyWriter.write(id);
+		bodyWriter.write("\"}");
 	}
 	
 	void establishSession() throws IOException, XMLStreamException, FactoryConfigurationError {
@@ -97,7 +188,7 @@ public class ChatterClient {
 		return si;
 	}
 	
-	String createFeedPost(String recordId, String title, String url, String testHealth) throws XMLStreamException, IOException {
+	String createSoapFeedPost(String recordId, String title, String url, String testHealth) throws XMLStreamException, IOException {
 		SaveResult sr = makeSoapRequest(session.instanceServerUrl, new FeedPostEntity(session.sessionId, recordId, title, url, testHealth), new SaveResultParser());
 		if (sr.success) return sr.id;
 		throw new SaveResultException(sr);

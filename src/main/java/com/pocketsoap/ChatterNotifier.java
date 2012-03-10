@@ -29,6 +29,7 @@ import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
+import hudson.model.User;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
@@ -40,7 +41,11 @@ import hudson.util.FormValidation;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
+import org.apache.tools.ant.taskdefs.condition.HasMethod;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -52,16 +57,30 @@ import com.pocketsoap.salesforce.soap.ChatterClient;
  */
 public class ChatterNotifier extends Notifier {
 	
-	private final String username, password, recordId, server;
-	private final boolean failureOnly;
+	private final String username, password, recordId, server, suspectMap;
+	private final boolean failureOnly, postRecovery, tagSuspects;
+	private final Map<String, String> scmIdToSfdcId = new HashMap<String, String>();
 	
 	@DataBoundConstructor
-	public ChatterNotifier(String username, String password, String recordId, String server, boolean failureOnly) {
+	public ChatterNotifier(String username, String password, String recordId, String server, boolean failureOnly, boolean postRecovery, boolean tagSuspects, String suspectMap) {
 		this.username = username;
 		this.password = password;
 		this.recordId = recordId;
 		this.server = server;
 		this.failureOnly = failureOnly;
+		this.postRecovery = postRecovery;
+		this.tagSuspects = tagSuspects;
+		this.suspectMap = suspectMap;
+		
+		final String[] lines = suspectMap.split("\n");
+		for (String line : lines) {
+			final int comma = line.lastIndexOf(',');
+			if (comma != -1) {
+				final String scmId = line.substring(0, comma);
+				final String sfdcId = comma < line.length() - 1 ? line.substring(comma + 1) : "";
+				scmIdToSfdcId.put(scmId, sfdcId);
+			}
+		}
 	}
 
 	/**
@@ -83,6 +102,18 @@ public class ChatterNotifier extends Notifier {
 		return failureOnly;
 	}
 	
+	public String getSuspectMap() {
+		return suspectMap;
+	}
+
+	public boolean isPostRecovery() {
+		return postRecovery;
+	}
+
+	public boolean isTagSuspects() {
+		return tagSuspects;
+	}
+
 	// we'll run after being finalized, and not look at previous results
 	// so we don't need any locking here, this'll let us be used safely
 	// from a concurrent build.
@@ -101,11 +132,15 @@ public class ChatterNotifier extends Notifier {
 	 */
 	@Override
 	public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener) {
-		if (this.failureOnly && build.getResult() == Result.SUCCESS)
-			return true;
+		final Result result = build.getResult();
+		if (this.failureOnly && result == Result.SUCCESS) {
+			if (!this.postRecovery || build.getPreviousBuild() == null || build.getPreviousBuild().getResult() == Result.SUCCESS) {
+				return true;
+			}
+		}
 
         PrintStream ps = listener.getLogger();
-		String title = "Build: " + build.getProject().getName() + " " + build.getDisplayName() + " is " + build.getResult().toString();
+		String title = "Build: " + build.getProject().getName() + " " + build.getDisplayName().replaceAll("#", "") + " is " + build.getResult().toString();
         String rootUrl = Hudson.getInstance().getRootUrl();
         String url = rootUrl == null ? null : rootUrl + build.getUrl();
         
@@ -121,10 +156,23 @@ public class ChatterNotifier extends Notifier {
         	testHealth = th.toString();
         }
         
+        Map<String, String> suspects = null;
+        if (this.tagSuspects && result != Result.SUCCESS) {
+        	Set<User> culprits = build.getCulprits();
+        	if (!culprits.isEmpty()) {
+        		suspects = new HashMap<String, String>(culprits.size());
+        		
+        		for (User culprit : culprits) {
+        			final String culpritId = culprit.getId();
+					suspects.put(culpritId, scmIdToSfdcId.get(culpritId));
+        		}
+        	}
+        }
+        
         try {
         	// even though we do form validation in the descriptor, the user is still allowed
         	// to save an invalid config, so we can't assume these values are good.
-        	new ChatterClient(username, password, server).postBuild(recordId, title, url, testHealth);
+        	new ChatterClient(username, password, server).postBuild(recordId, title, url, testHealth, suspects);
         } catch (Exception ex) {
         	ps.print("error posting to chatter : " + ex.getMessage());
         }
@@ -211,7 +259,7 @@ public class ChatterNotifier extends Notifier {
 				}
 				String postId = null;
 				try {
-					postId = c.postBuild(recordId, null, null, "temporary post to verify setup");
+					postId = c.postBuild(recordId, null, null, "temporary post to verify setup", null);
 				} catch (Exception ex) {
 					return FormValidation.error("Unable to post to chatter : " + ex.getMessage());
 				}

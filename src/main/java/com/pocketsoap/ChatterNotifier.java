@@ -45,7 +45,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.tools.ant.taskdefs.condition.HasMethod;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -57,12 +56,12 @@ import com.pocketsoap.salesforce.soap.ChatterClient;
  */
 public class ChatterNotifier extends Notifier {
 	
-	private final String username, password, recordId, server, suspectMap;
+	private final String username, password, recordId, server, suspectMap, defaultDomain;
 	private final boolean failureOnly, postRecovery, tagSuspects;
 	private final Map<String, String> scmIdToSfdcId = new HashMap<String, String>();
 	
 	@DataBoundConstructor
-	public ChatterNotifier(String username, String password, String recordId, String server, boolean failureOnly, boolean postRecovery, boolean tagSuspects, String suspectMap) {
+	public ChatterNotifier(String username, String password, String recordId, String server, boolean failureOnly, boolean postRecovery, boolean tagSuspects, String defaultDomain, String suspectMap) {
 		this.username = username;
 		this.password = password;
 		this.recordId = recordId;
@@ -70,6 +69,7 @@ public class ChatterNotifier extends Notifier {
 		this.failureOnly = failureOnly;
 		this.postRecovery = postRecovery;
 		this.tagSuspects = tagSuspects;
+		this.defaultDomain = defaultDomain;
 		this.suspectMap = suspectMap;
 		
 		final String[] lines = suspectMap.split("\n");
@@ -102,6 +102,10 @@ public class ChatterNotifier extends Notifier {
 		return failureOnly;
 	}
 	
+	public String getDefaultDomain() {
+		return defaultDomain;
+	}
+	
 	public String getSuspectMap() {
 		return suspectMap;
 	}
@@ -118,7 +122,7 @@ public class ChatterNotifier extends Notifier {
 	// so we don't need any locking here, this'll let us be used safely
 	// from a concurrent build.
 	public BuildStepMonitor getRequiredMonitorService() {
-		return BuildStepMonitor.NONE;
+		return BuildStepMonitor.STEP;
 	}
 
 	@Override
@@ -164,7 +168,13 @@ public class ChatterNotifier extends Notifier {
         		
         		for (User culprit : culprits) {
         			final String culpritId = culprit.getId();
-					suspects.put(culpritId, scmIdToSfdcId.get(culpritId));
+					String mappedLogin = scmIdToSfdcId.get(culpritId);
+					if (mappedLogin == null) {
+						mappedLogin = culpritId + '@' + defaultDomain;
+					} else if (!mappedLogin.contains("@")) {
+						mappedLogin = mappedLogin + '@' + defaultDomain;
+					}
+					suspects.put(culpritId, mappedLogin);
         		}
         	}
         }

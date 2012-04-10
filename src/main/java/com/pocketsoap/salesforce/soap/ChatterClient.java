@@ -22,16 +22,14 @@
 package com.pocketsoap.salesforce.soap;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -43,6 +41,15 @@ import javax.xml.stream.XMLStreamReader;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
+import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.map.MappingJsonFactory;
+import org.codehaus.jackson.map.ObjectMapper;
+
+import com.pocketsoap.salesforce.rest.chatter.Comment;
+import com.pocketsoap.salesforce.rest.chatter.MentionMessageSegment;
+import com.pocketsoap.salesforce.rest.chatter.MessageSegment;
+import com.pocketsoap.salesforce.rest.chatter.TextMessageSegment;
+import com.pocketsoap.salesforce.rest.user.UserService;
 
 /**
  * This class handles all the API calls to Salesforce/Chatter using the SOAP API.
@@ -102,11 +109,12 @@ public class ChatterClient {
 			throws MalformedURLException, IOException, XMLStreamException,
 			FactoryConfigurationError {
 		URL instanceUrl = new URL(session.instanceServerUrl);
-		//String the -api off the host
 		URL url = new URL(instanceUrl.getProtocol(),
-				instanceUrl.getHost().replaceAll("-api", ""), instanceUrl.getPort(), 
+				instanceUrl.getHost(), instanceUrl.getPort(), 
 				"/services/data/v24.0/chatter/feed-items/" + postId + "/comments");
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+		
+		
 		try {
 			conn.setRequestMethod("POST");
 			conn.setDoOutput(true);
@@ -116,30 +124,37 @@ public class ChatterClient {
 			conn.setRequestProperty("Authorization", "OAuth " + session.sessionId); 
 
 
-			OutputStream bodyStream = conn.getOutputStream();
-			Writer bodyWriter = new BufferedWriter(new OutputStreamWriter(bodyStream));
+			final Comment comment = new Comment();
+			final List<MessageSegment> messageSegments = comment.getBody().getMessageSegments();
+			messageSegments.add(new TextMessageSegment("Suspects: "));
 			
-			bodyWriter.write("{\"body\":{\"messageSegments\":[");
-			writeTextSegment(bodyWriter, "Suspects: ");
 			Iterator<Entry<String, String>> it = suspects.entrySet().iterator();
 			while (it.hasNext()) {
 				Entry<String, String> ids = it.next();
 
-				bodyWriter.write(",");
 				String sfdcId = ids.getValue();
+				if (sfdcId != null) {
+					//Convert the login to an SFDC ID
+					sfdcId = UserService.getUserId(session, sfdcId);
+				}
+				
 				if (sfdcId == null) { //not mapped
-					writeTextSegment(bodyWriter, ids.getKey());
+					messageSegments.add(new TextMessageSegment(ids.getKey()));
 				} else {
-					writeMentionSegment(bodyWriter, sfdcId);
+					messageSegments.add(new MentionMessageSegment(sfdcId));
 				}
 
 				if (it.hasNext()) {
-					writeTextSegment(bodyWriter, ", ");
+					messageSegments.add(new TextMessageSegment(", "));
 				}
 			}
 
-			bodyWriter.write("]}}");
-			bodyWriter.close();
+			final OutputStream bodyStream = conn.getOutputStream();
+			ObjectMapper mapper = new ObjectMapper();
+			MappingJsonFactory jsonFactory = new MappingJsonFactory();
+			JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(bodyStream);
+			mapper.writeValue(jsonGenerator, comment);
+			bodyStream.close();
 			conn.getInputStream().close(); //Don't care about the response
 		} catch (IOException e) {
 			if (retryOnInvalidSession && conn.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
@@ -157,20 +172,6 @@ public class ChatterClient {
 			throw e;
 		}
 		return null;
-	}
-
-	private void writeTextSegment(Writer bodyWriter, String txt)
-			throws IOException {
-		bodyWriter.write("{\"type\":\"Text\",\"text\":\"");
-		bodyWriter.write(txt);
-		bodyWriter.write("\"}");
-	}
-		
-	private void writeMentionSegment(Writer bodyWriter, String id)
-			throws IOException {
-		bodyWriter.write("{\"type\":\"Mention\",\"id\":\"");
-		bodyWriter.write(id);
-		bodyWriter.write("\"}");
 	}
 	
 	void establishSession() throws IOException, XMLStreamException, FactoryConfigurationError {

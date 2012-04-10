@@ -30,7 +30,10 @@
   <f:entry title="Tag Suspects" field="tagSuspects">
 	<f:checkbox />
   </f:entry>
-  <f:entry title="Map SCM Ids to Salesforce.com Ids" field="suspectMap">
+  <f:entry title="Default Saleforce email domain" field="defaultDomain">
+  	<f:textbox/>
+  </f:entry>
+  <f:entry title="Map SCM Ids to Salesforce.com Logins" field="suspectMap">
     <f:textarea />
   </f:entry>
 

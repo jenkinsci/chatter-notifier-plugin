@@ -1,5 +1,10 @@
 <div>
-Each line contains a comma separated map of IDs. If not set for a suspect nthe SCM ID will be displayed as text.
-The 1st column is the SCM ID (for git the user name) and the second column is the Salesforce.com ID.<br />
-Example: joeuser,005x0000000Xy2z
-</div>
+Each line contains a comma separated map of SCM ID to Salesforce logins.<br> 
+If not set for a suspect, &lt;SCM ID&gt;@&lt;Default Domain&gt; will be used.<br>
+The 1st column is the SCM ID (for git the user name) and the second column is the Salesforce.com login.<br>
+If the login is in the default domain the @domain can be left off.<br>
+<h5>Examples:</h5>
+<ul>
+<li>joeuser,juser</li>
+<li>janeuser,jane.user@gmail.com</li>
+</ul></div>

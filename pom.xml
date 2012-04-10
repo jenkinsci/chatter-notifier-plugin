@@ -15,6 +15,11 @@
   <description>Post your build result to Chatter</description>
   <url>https://github.com/superfell/HudsonChatterPlugin</url>
 
+ <properties>
+   <jersey.version>1.12</jersey.version>
+ </properties>
+
+
   <!-- get every artifact through maven.glassfish.org, which proxies all the artifacts that we need -->
   <repositories>
     <repository>
@@ -37,5 +42,25 @@
   		<type>jar</type>
   		<scope>compile</scope>
   	</dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>1.9.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>${jersey.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-core</artifactId>
+            <version>${jersey.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-json</artifactId>
+            <version>${jersey.version}</version>
+        </dependency>
   </dependencies>
 </project>

@@ -46,7 +46,7 @@ public class FeedPostEntity extends AuthenticatedRequestEntity {
 	protected void writeBody(XMLStreamWriter w) throws XMLStreamException {
 		w.writeStartElement(PARTNER_NS, "create");
 		w.writeStartElement(PARTNER_NS, "sobject");
-		writeElementString(w, PARTNER_NS, "type", "FeedPost");
+		writeElementString(w, PARTNER_NS, "type", "FeedItem");
 		writeElementString(w, PARTNER_NS, "parentId", parentId);
 		writeElementString(w, PARTNER_NS, "LinkUrl", url);
 		writeElementString(w, PARTNER_NS, "title", title);

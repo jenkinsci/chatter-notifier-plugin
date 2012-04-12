@@ -24,6 +24,19 @@
   <f:entry title="Chatter only on failure" field="failureOnly">
 	<f:checkbox />
   </f:entry>
+  <f:entry title="Chatter on recovery" field="postRecovery">
+	<f:checkbox />
+  </f:entry>
+  <f:entry title="Tag Suspects" field="tagSuspects">
+	<f:checkbox />
+  </f:entry>
+  <f:entry title="Default Saleforce email domain" field="defaultDomain">
+  	<f:textbox/>
+  </f:entry>
+  <f:entry title="Map SCM Ids to Salesforce.com Logins" field="suspectMap">
+    <f:textarea />
+  </f:entry>
+
   
   <f:validateButton
    title="Verify Settings" progress="Verifying Settings ..."

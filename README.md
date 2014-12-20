@@ -1,17 +1,18 @@
-# Chatter plugin for Hudson/Jenkins
+# Chatter plugin for Jenkins
 
-This is a plugin for Hudson/Jenkins that will post build build results to a Chatter feed. You can configure it to post to a specific User (e.g. a build user), a specific group (e.g. a group that owns the build), or a specific record (perhaps you have a custom object that tracks build configs).
+This is a plugin for Jenkins that will post build build results to a Chatter feed. You can configure it to post to a specific User (e.g. a build user), a specific group (e.g. a group that owns the build), or a specific record (perhaps you have a custom object that tracks build configs).
 
 
 # Build
 
-The plugin is built with Maven, same as Hudson itself, simply clone to repo and run mvn install, the generated plugin ChatterPlugin.hdi will be in the target directory.
+The plugin is built with Maven, same as Jenkins itself, simply clone to repo and run mvn install, the generated plugin ChatterPlugin.hdi will be in the target directory.
 
+More details on building Jenkins plugins are available on the [Jenkins Wiki](https://wiki.jenkins-ci.org/display/JENKINS/Plugin+tutorial)
 If you don't want to build from the source, there's a prebuilt version of the plugin available in the downloads section.
 
 # Install
 
-Goto the manage hudson page, manage plugins, and then the advanced tab, and pick the option to upload a new plugin. When the upload is finished, you'll need to restart your Hudson server.
+Goto the manage jenkins page, manage plugins, and then the advanced tab, and pick the option to upload a new plugin. When the upload is finished, you'll need to restart your server.
 
 
 # Configure

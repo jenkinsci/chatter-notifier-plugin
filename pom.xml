@@ -1,15 +1,17 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project 
+	xmlns="http://maven.apache.org/POM/4.0.0" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.jvnet.hudson.plugins</groupId>
+    <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.377</version><!-- which version of Hudson is this plugin built against? -->
-    <relativePath>../pom.xml</relativePath>
+    <version>1.480.3</version><!-- which version of Jenkins is this plugin built against? -->
   </parent>
 
   <groupId>com.pocketsoap</groupId>
   <artifactId>ChatterPlugin</artifactId>
-  <version>1.11</version>
+  <version>1.2</version>
   <packaging>hpi</packaging>
   <name>Chatter plugin</name>
   <description>Post your build result to Chatter</description>
@@ -19,21 +21,21 @@
    <jersey.version>1.12</jersey.version>
  </properties>
 
+ <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
+ <repositories>
+   <repository>
+     <id>repo.jenkins-ci.org</id>
+     <url>http://repo.jenkins-ci.org/public/</url>
+   </repository>
+ </repositories>
 
-  <!-- get every artifact through maven.glassfish.org, which proxies all the artifacts that we need -->
-  <repositories>
-    <repository>
-      <id>m.g.o-public</id>
-      <url>https://maven.glassfish.org/content/groups/public/</url>
-    </repository>
-  </repositories>
+ <pluginRepositories>
+   <pluginRepository>
+     <id>repo.jenkins-ci.org</id>
+     <url>http://repo.jenkins-ci.org/public/</url>
+   </pluginRepository>
+ </pluginRepositories>
 
-  <pluginRepositories>
-    <pluginRepository>
-      <id>m.g.o-public</id>
-      <url>https://maven.glassfish.org/content/groups/public/</url>
-    </pluginRepository>
-  </pluginRepositories>
   <dependencies>
   	<dependency>
   		<groupId>commons-httpclient</groupId>

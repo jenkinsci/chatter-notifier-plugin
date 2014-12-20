@@ -11,11 +11,11 @@
 
   <groupId>com.pocketsoap</groupId>
   <artifactId>ChatterPlugin</artifactId>
-  <version>1.2</version>
+  <version>1.21</version>
   <packaging>hpi</packaging>
   <name>Chatter plugin</name>
-  <description>Post your build result to Chatter</description>
-  <url>https://github.com/superfell/HudsonChatterPlugin</url>
+  <description>Post your build results to Chatter</description>
+  <url>https://github.com/superfell/JenkinsChatterPlugin</url>
 
  <properties>
    <jersey.version>1.12</jersey.version>

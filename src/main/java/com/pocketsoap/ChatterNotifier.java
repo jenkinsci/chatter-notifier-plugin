@@ -149,7 +149,7 @@ public class ChatterNotifier extends Notifier {
         String url = rootUrl == null ? null : rootUrl + build.getUrl();
         
         String testHealth = null;
-        AbstractTestResultAction<?> tr = build.getTestResultAction();
+        AbstractTestResultAction<?> tr = build.getAction(AbstractTestResultAction.class);
         if (tr != null) {
         	StringBuilder th = new StringBuilder(tr.getBuildHealth().getDescription());
         	if (tr.getFailedTests().size() > 0) {

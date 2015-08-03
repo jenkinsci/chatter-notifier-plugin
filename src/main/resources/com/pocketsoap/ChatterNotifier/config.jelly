@@ -30,6 +30,9 @@
   <f:entry title="Tag Suspects" field="tagSuspects">
 	<f:checkbox />
   </f:entry>
+  <f:entry title="Publish EnForce coverage results" field="publishEnForceResults">
+    <f:checkbox />
+  </f:entry>
   <f:entry title="Default Saleforce email domain" field="defaultDomain">
   	<f:textbox/>
   </f:entry>

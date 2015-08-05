@@ -35,6 +35,9 @@ import hudson.util.FormValidation;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.FileUtils;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -45,6 +48,7 @@ import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -137,7 +141,7 @@ public class ChatterNotifier extends Notifier {
 	 * and execute the the actions.
 	 */
 	@Override
-	public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener) {
+	public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
 		final Result result = build.getResult();
 		if (this.failureOnly && result == Result.SUCCESS) {
 			if (!this.postRecovery || build.getPreviousBuild() == null || build.getPreviousBuild().getResult() == Result.SUCCESS) {
@@ -155,14 +159,8 @@ public class ChatterNotifier extends Notifier {
         if (tr != null) {
 			StringBuilder th = new StringBuilder();
 			if (this.publishEnForceResults) {
-				try {
-					th.append(this.getEnForceResults(build));
-					th.append('\n');
-				} catch (IOException e) {
-					ps.print("Error adding EnForce results : " + e.getMessage());
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+				th.append(this.getEnForceResults(build));
+				th.append('\n');
 			}
 			String testResultDescription = tr.getBuildHealth().getDescription();
 			th.append(testResultDescription);
@@ -203,38 +201,43 @@ public class ChatterNotifier extends Notifier {
         return true;
     }
 
-	private String getEnForceResults(AbstractBuild<?,?> build) throws IOException, InterruptedException {
+	public String getEnForceResults(AbstractBuild<?,?> build) throws IOException, InterruptedException {
 		String contentFile = build.getWorkspace().absolutize().getRemote() + "/build/report/coverage.json";
 		StringBuilder result = new StringBuilder();
 		File coverageFile = new File(contentFile);
 		if (coverageFile.exists()) {
-			JSONObject jsonObject = JSONObject.fromObject(FileUtils.readFileToString(coverageFile));
-			if (jsonObject.containsKey("coverageData")) {
-				JSONArray coverageData = jsonObject.getJSONArray("coverageData");
-				JSONArray statusData = jsonObject.getJSONArray("data");
-				Integer coveredLines = coverageData.getJSONArray(1).getInt(1);
-				Integer notCoveredLines = coverageData.getJSONArray(2).getInt(1);
-				Integer totalLines = coveredLines + notCoveredLines;
-				Double coveragePercent = 0.0;
-				if (coveredLines > 0) {
-					coveragePercent = BigDecimal.valueOf(coveredLines).multiply(new BigDecimal(100)).divide(BigDecimal.valueOf(totalLines), BigDecimal.ROUND_CEILING, 2).doubleValue();
-				}
-				result.append("Coverage Result: ");
-				result.append(coveragePercent);
-				result.append("% of code coverage, ");
-				result.append(getEnForceCoverageStatus(coveragePercent));
-				result.append(" status.");
-				result.append("\nCoverage Status: ");
-				for (Integer i = 1; i <= statusData.size(); i++) {
-					JSONArray statusIndicator = statusData.getJSONArray(i);
-					result.append(statusIndicator.getString(0));
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode jsonObject = mapper.readValue(coverageFile, JsonNode.class);
+			JsonNode coverageData = jsonObject.get("coverageData");
+			JsonNode statusData = jsonObject.get("data");
+			Integer coveredLines = coverageData.get(1).get(1).asInt();
+			Integer notCoveredLines = coverageData.get(2).get(1).asInt();
+			Integer totalLines = coveredLines + notCoveredLines;
+			Double coveragePercent = 0.0;
+			if (coveredLines > 0) {
+				coveragePercent = BigDecimal.valueOf(coveredLines).multiply(new BigDecimal(100))
+						.divide(BigDecimal.valueOf(totalLines), BigDecimal.ROUND_CEILING, 2)
+						.doubleValue();
+			}
+			result.append("Coverage Result: ");
+			result.append(coveragePercent);
+			result.append("% of code coverage, ");
+			result.append(getEnForceCoverageStatus(coveragePercent));
+			result.append(" status.");
+			result.append("\nCoverage Status: ");
+			for (Integer i = 1; i <= statusData.size(); i++) {
+				JsonNode statusIndicator = statusData.get(i);
+				if (null != statusIndicator) {
+					result.append(statusIndicator.get(0).asText());
 					result.append(" = ");
-					result.append(statusIndicator.getInt(1));
+					result.append(statusIndicator.get(1).asInt());
 					result.append(" files. ");
 				}
 			}
 		} else {
-			throw new IOException("EnForce coverage results(" + contentFile + ") not found, maybe you would be to review EnForce documentation at https://github.com/fundacionjala/enforce-gradle-plugin");
+			throw new IOException("EnForce coverage results(" + contentFile + ") not found, " +
+					"maybe you need to review 'gradle runTest' EnForce command.  " +
+					"https://github.com/fundacionjala/enforce-gradle-plugin");
 		}
 		return result.toString();
 	}

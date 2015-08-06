@@ -21,15 +21,10 @@
 
 package com.pocketsoap;
 
+import com.pocketsoap.salesforce.soap.ChatterClient;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.Action;
-import hudson.model.BuildListener;
-import hudson.model.Result;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Hudson;
-import hudson.model.User;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
@@ -37,18 +32,25 @@ import hudson.tasks.Publisher;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.test.AbstractTestResultAction;
 import hudson.util.FormValidation;
-
-import java.io.PrintStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import org.apache.commons.io.FileUtils;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import com.pocketsoap.salesforce.soap.ChatterClient;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author superfell
@@ -57,11 +59,11 @@ import com.pocketsoap.salesforce.soap.ChatterClient;
 public class ChatterNotifier extends Notifier {
 	
 	private final String username, password, recordId, server, suspectMap, defaultDomain;
-	private final boolean failureOnly, postRecovery, tagSuspects;
+	private final boolean failureOnly, postRecovery, tagSuspects, publishEnForceResults;
 	private final Map<String, String> scmIdToSfdcId = new HashMap<String, String>();
 	
 	@DataBoundConstructor
-	public ChatterNotifier(String username, String password, String recordId, String server, boolean failureOnly, boolean postRecovery, boolean tagSuspects, String defaultDomain, String suspectMap) {
+	public ChatterNotifier(String username, String password, String recordId, String server, boolean failureOnly, boolean postRecovery, boolean tagSuspects, boolean publishEnForceResults, String defaultDomain, String suspectMap) {
 		this.username = username;
 		this.password = password;
 		this.recordId = recordId;
@@ -69,6 +71,7 @@ public class ChatterNotifier extends Notifier {
 		this.failureOnly = failureOnly;
 		this.postRecovery = postRecovery;
 		this.tagSuspects = tagSuspects;
+		this.publishEnForceResults = publishEnForceResults;
 		this.defaultDomain = defaultDomain;
 		this.suspectMap = suspectMap;
 		
@@ -117,6 +120,9 @@ public class ChatterNotifier extends Notifier {
 	public boolean isTagSuspects() {
 		return tagSuspects;
 	}
+	public boolean isPublishEnForceResults() {
+		return publishEnForceResults;
+	}
 
 	// we'll run after being finalized, and not look at previous results
 	// so we don't need any locking here, this'll let us be used safely
@@ -135,7 +141,7 @@ public class ChatterNotifier extends Notifier {
 	 * and execute the the actions.
 	 */
 	@Override
-	public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener) {
+	public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
 		final Result result = build.getResult();
 		if (this.failureOnly && result == Result.SUCCESS) {
 			if (!this.postRecovery || build.getPreviousBuild() == null || build.getPreviousBuild().getResult() == Result.SUCCESS) {
@@ -151,13 +157,19 @@ public class ChatterNotifier extends Notifier {
         String testHealth = null;
         AbstractTestResultAction<?> tr = build.getAction(AbstractTestResultAction.class);
         if (tr != null) {
-        	StringBuilder th = new StringBuilder(tr.getBuildHealth().getDescription());
+			StringBuilder th = new StringBuilder();
+			if (this.publishEnForceResults) {
+				th.append(this.getEnForceResults(build));
+				th.append('\n');
+			}
+			String testResultDescription = tr.getBuildHealth().getDescription();
+			th.append(testResultDescription);
         	if (tr.getFailedTests().size() > 0) {
         		th.append("\nFailures");
         		for(CaseResult cr : tr.getFailedTests())
         			th.append("\n").append(cr.getFullName());
         	}
-        	testHealth = th.toString();
+			testHealth = th.toString();
         }
         
         Map<String, String> suspects = null;
@@ -188,6 +200,63 @@ public class ChatterNotifier extends Notifier {
         }
         return true;
     }
+
+	public String getEnForceResults(AbstractBuild<?,?> build) throws IOException, InterruptedException {
+		String contentFile = build.getWorkspace().absolutize().getRemote() + "/build/report/coverage.json";
+		StringBuilder result = new StringBuilder();
+		File coverageFile = new File(contentFile);
+		if (coverageFile.exists()) {
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode jsonObject = mapper.readValue(coverageFile, JsonNode.class);
+			JsonNode coverageData = jsonObject.get("coverageData");
+			JsonNode statusData = jsonObject.get("data");
+			Integer coveredLines = coverageData.get(1).get(1).asInt();
+			Integer notCoveredLines = coverageData.get(2).get(1).asInt();
+			Integer totalLines = coveredLines + notCoveredLines;
+			Double coveragePercent = 0.0;
+			if (coveredLines > 0) {
+				coveragePercent = BigDecimal.valueOf(coveredLines).multiply(new BigDecimal(100))
+						.divide(BigDecimal.valueOf(totalLines), BigDecimal.ROUND_CEILING, 2)
+						.doubleValue();
+			}
+			result.append("Coverage Result: ");
+			result.append(coveragePercent);
+			result.append("% of code coverage, ");
+			result.append(getEnForceCoverageStatus(coveragePercent));
+			result.append(" status.");
+			result.append("\nCoverage Status: ");
+			for (Integer i = 1; i <= statusData.size(); i++) {
+				JsonNode statusIndicator = statusData.get(i);
+				if (null != statusIndicator) {
+					result.append(statusIndicator.get(0).asText());
+					result.append(" = ");
+					result.append(statusIndicator.get(1).asInt());
+					result.append(" files. ");
+				}
+			}
+		} else {
+			throw new IOException("EnForce coverage results(" + contentFile + ") not found, " +
+					"maybe you need to review 'gradle runTest' EnForce command.  " +
+					"https://github.com/fundacionjala/enforce-gradle-plugin");
+		}
+		return result.toString();
+	}
+
+	private String getEnForceCoverageStatus(Double coveragePercent) {
+		String status = null;
+		if (coveragePercent < 75) {
+			status = "Danger";
+		} else if (coveragePercent < 80) {
+			status = "Risk";
+		} else if (coveragePercent < 75) {
+			status = "Danger";
+		} else if (coveragePercent < 95) {
+			status = "Acceptable";
+		} else {
+			status = "Safe";
+		}
+		return status;
+	}
 
 	public Action getProjectAction(AbstractProject<?, ?> project) {
 		return null;

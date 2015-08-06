@@ -11,7 +11,7 @@
 
   <groupId>com.pocketsoap</groupId>
   <artifactId>ChatterPlugin</artifactId>
-  <version>1.21</version>
+  <version>1.22</version>
   <packaging>hpi</packaging>
   <name>Chatter plugin</name>
   <description>Post your build results to Chatter</description>
@@ -44,7 +44,14 @@
   		<type>jar</type>
   		<scope>compile</scope>
   	</dependency>
-        <dependency>
+      <dependency>
+          <groupId>commons-io</groupId>
+          <artifactId>commons-io</artifactId>
+          <version>2.4</version>
+          <type>jar</type>
+          <scope>compile</scope>
+      </dependency>
+      <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
             <version>1.9.2</version>

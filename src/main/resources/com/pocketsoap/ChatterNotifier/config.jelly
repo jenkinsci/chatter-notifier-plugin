@@ -9,12 +9,9 @@
     Creates a text field that shows the value of the "name" property.
     When submitted, it will be passed to the corresponding constructor parameter.
   -->
-  <f:entry title="Username" field="username">
-    <f:textbox />
-  </f:entry>
-  <f:entry title="Password" field="password">
-    <f:password />
-  </f:entry>
+  <f:entry title="Credentials Id" field="credentialsId" name="credentialsId">
+	  	<f:select />
+	  </f:entry>
   <f:entry title="recordId" field="recordId">
     <f:textbox />
   </f:entry>
@@ -43,6 +40,6 @@
   
   <f:validateButton
    title="Verify Settings" progress="Verifying Settings ..."
-   method="testConnection" with="username,password,recordId,server" />
+   method="testConnection" with="credentialsId,recordId,server" />
    
 </j:jelly>

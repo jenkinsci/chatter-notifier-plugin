@@ -21,25 +21,25 @@
 
 package com.pocketsoap;
 
-import com.pocketsoap.salesforce.soap.ChatterClient;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.Action;
+import hudson.model.BuildListener;
+import hudson.model.Result;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.Hudson;
+import hudson.model.User;
+import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
-import hudson.tasks.junit.CaseResult;
 import hudson.tasks.test.AbstractTestResultAction;
+import hudson.tasks.test.TestResult;
 import hudson.util.FormValidation;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.apache.commons.io.FileUtils;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
+import hudson.util.Secret;
+import hudson.util.ListBoxModel;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,10 +47,26 @@ import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import jenkins.model.Jenkins;
+
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.pocketsoap.salesforce.soap.ChatterClient;
 
 /**
  * @author superfell
@@ -58,14 +74,12 @@ import java.util.Set;
  */
 public class ChatterNotifier extends Notifier {
 	
-	private final String username, password, recordId, server, suspectMap, defaultDomain;
+	private final String recordId, server, suspectMap, defaultDomain, credentialsId;
 	private final boolean failureOnly, postRecovery, tagSuspects, publishEnForceResults;
 	private final Map<String, String> scmIdToSfdcId = new HashMap<String, String>();
 	
 	@DataBoundConstructor
-	public ChatterNotifier(String username, String password, String recordId, String server, boolean failureOnly, boolean postRecovery, boolean tagSuspects, boolean publishEnForceResults, String defaultDomain, String suspectMap) {
-		this.username = username;
-		this.password = password;
+	public ChatterNotifier(String credentialsId, String recordId, String server, boolean failureOnly, boolean postRecovery, boolean tagSuspects, boolean publishEnForceResults, String defaultDomain, String suspectMap) {
 		this.recordId = recordId;
 		this.server = server;
 		this.failureOnly = failureOnly;
@@ -74,6 +88,7 @@ public class ChatterNotifier extends Notifier {
 		this.publishEnForceResults = publishEnForceResults;
 		this.defaultDomain = defaultDomain;
 		this.suspectMap = suspectMap;
+		this.credentialsId = credentialsId;
 		
 		final String[] lines = suspectMap.split("\n");
 		for (String line : lines) {
@@ -89,12 +104,10 @@ public class ChatterNotifier extends Notifier {
 	/**
 	 * We'll use this from the <tt>config.jelly</tt>.
 	 */
-	public String getUsername() {
-		return username;
+	public String getCredentialsId() {
+		return credentialsId;
 	}
-	public String getPassword() {
-		return password;
-	}
+	
 	public String getRecordId() {
 		return recordId;
 	}
@@ -151,7 +164,7 @@ public class ChatterNotifier extends Notifier {
 
         PrintStream ps = listener.getLogger();
 		String title = "Build: " + build.getProject().getName() + " " + build.getDisplayName().replaceAll("#", "") + " is " + build.getResult().toString();
-        String rootUrl = Hudson.getInstance().getRootUrl();
+        String rootUrl = Jenkins.getInstance().getRootUrl();
         String url = rootUrl == null ? null : rootUrl + build.getUrl();
         
         String testHealth = null;
@@ -166,7 +179,7 @@ public class ChatterNotifier extends Notifier {
 			th.append(testResultDescription);
         	if (tr.getFailedTests().size() > 0) {
         		th.append("\nFailures");
-        		for(CaseResult cr : tr.getFailedTests())
+        		for(TestResult cr : tr.getFailedTests())
         			th.append("\n").append(cr.getFullName());
         	}
 			testHealth = th.toString();
@@ -194,7 +207,8 @@ public class ChatterNotifier extends Notifier {
         try {
         	// even though we do form validation in the descriptor, the user is still allowed
         	// to save an invalid config, so we can't assume these values are good.
-        	new ChatterClient(username, password, server).postBuild(recordId, title, url, testHealth, suspects);
+        	UsernamePasswordCredentials c = getCredentialsById(credentialsId);
+        	new ChatterClient(c.getUsername(), Secret.toString(c.getPassword()), server).postBuild(recordId, title, url, testHealth, suspects);
         } catch (Exception ex) {
         	ps.print("error posting to chatter : " + ex.getMessage());
         }
@@ -285,18 +299,23 @@ public class ChatterNotifier extends Notifier {
             return "Chatter Results";
         }
 		
-		public FormValidation doCheckUsername(@QueryParameter String value) {
-            if(value.length()==0)
-                return FormValidation.error("Please enter a username");
-            if(value.indexOf('@') == -1)
-                return FormValidation.warning("Username's usually have an @ in them, e.g. hudson@example.org");
-            return FormValidation.ok();
-        }
-		
-		public FormValidation doCheckPassword(@QueryParameter String value) {
-            if(value.length()==0)
-                return FormValidation.error("Please enter a password");
-            return FormValidation.ok();
+		public FormValidation doCheckCredentialsId(@QueryParameter String value) {
+			UsernamePasswordCredentials c = getCredentialsById(value);
+			
+			if (c == null) {
+				return FormValidation.error("Please enter a Username with Password credentials id");
+			}
+			
+			if(c.getUsername().length() == 0)
+                return FormValidation.error("This credential should have a username");
+			
+            if(c.getUsername().indexOf('@') == -1)
+                return FormValidation.warning("Username's usually have an @ in them, e.g. hudson@example.org"); 
+            
+            if (Secret.toString(c.getPassword()).length() == 0) {
+            	return FormValidation.error("This credential should have a password");
+            }
+			return FormValidation.ok();
 		}
 		
 		public FormValidation doCheckRecordId(@QueryParameter String value) {
@@ -327,9 +346,19 @@ public class ChatterNotifier extends Notifier {
 				@QueryParameter("username") String username,
 				@QueryParameter("password") String password,
 				@QueryParameter("recordId") String recordId,
-				@QueryParameter("server") String server) {
+				@QueryParameter("server") String server, 
+				@QueryParameter("credentialsId") String credentialsId) {
 
 			try {
+				if (credentialsId.length() > 0) {
+					UsernamePasswordCredentials c = getCredentialsById(credentialsId);
+					
+					if (c != null) {
+						username = c.getUsername();
+						password = Secret.toString(c.getPassword());
+					}
+				}
+				
 				ChatterClient c = new ChatterClient(username, password, server);
 				try {
 					c.performLogin();
@@ -352,5 +381,34 @@ public class ChatterNotifier extends Notifier {
 				return FormValidation.error("Malformed server URL : " + e.getMessage());
 			}
 		}
+		
+		/**
+		 * Populate the credentials dropdown box
+		 * @return A ListBoxModel containing all global credentials
+		 */
+		public ListBoxModel doFillCredentialsIdItems() {
+			return new StandardListBoxModel()
+	            .withEmptySelection()
+	            .withMatching(
+	            		CredentialsMatchers.allOf(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class)),
+	                    CredentialsProvider.lookupCredentials(StandardCredentials.class,
+	                            Jenkins.getInstance(),
+	                            ACL.SYSTEM,
+	                            Collections.<DomainRequirement>emptyList())
+	            );
+        }
+	}
+	
+	/**
+	 * Helper method to return credentials by id
+	 * @param id The credentials id
+	 * @return A UsernamePasswordCredential object that encapsulates usernames and passwords
+	 */
+	public static UsernamePasswordCredentials getCredentialsById(String id) {
+		return CredentialsMatchers.firstOrNull(
+	                CredentialsProvider.lookupCredentials(UsernamePasswordCredentials.class, 
+	                		Jenkins.getInstance(), 
+	                		ACL.SYSTEM,
+	                        Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(id));
 	}
 }

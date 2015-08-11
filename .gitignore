@@ -1,3 +1,7 @@
 target
 work
 .DS_Store
+.classpath
+.settings/
+.project
+/bin/

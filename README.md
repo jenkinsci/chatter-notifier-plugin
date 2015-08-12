@@ -8,7 +8,7 @@ This is a plugin for Jenkins that will post build build results to a Chatter fee
 The plugin is built with Maven, same as Jenkins itself, simply clone to repo and run mvn install, the generated plugin ChatterPlugin.hdi will be in the target directory.
 
 More details on building Jenkins plugins are available on the [Jenkins Wiki](https://wiki.jenkins-ci.org/display/JENKINS/Plugin+tutorial)
-If you don't want to build from the source, there's a [prebuilt version of the plugin available](http://www.pocketsoap.com/osx/jenkins/ChatterPlugin.zip).
+If you don't want to build from the source, there's a [prebuilt version of the plugin available](http://www.pocketsoap.com/osx/jenkins/ChatterPlugin_v2.zip).
 
 # Install
 

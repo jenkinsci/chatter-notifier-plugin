@@ -9,13 +9,40 @@
     <version>1.580.1</version><!-- which version of Jenkins is this plugin built against? -->
   </parent>
   
-  <groupId>com.pocketsoap</groupId>
-  <artifactId>ChatterPlugin</artifactId>
-  <version>2.0</version>
+  <groupId>org.jenkins-ci.plugins</groupId>
+  <artifactId>chatter-notifier</artifactId>
+  <version>2.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
-  <name>Chatter plugin</name>
-  <description>Post your build results to Chatter</description>
-  <url>https://github.com/superfell/JenkinsChatterPlugin</url>
+  
+  <name>Chatter Notifier Plugin</name>
+  <description>Post build results to Chatter</description>
+  <url>https://wiki.jenkins-ci.org/display/JENKINS/Chatter+Notifier+Plugin</url>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://opensource.org/licenses/MIT</url>
+    </license>
+  </licenses>
+  
+  <developers>
+    <developer>
+      <id>sfell</id>
+      <name>Simon Fell</name>
+      <email>sfell@salesforce.com</email>
+    </developer>
+    
+    <developer>
+      <id>sortiz</id>
+      <name>Stephanie Ortiz</name>
+      <email>sortiz@salesforce.com</email>
+    </developer>
+  </developers>
+  
+  <scm>
+    <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
+    <url>http://github.com/jenkinsci/${project.artifactId}-plugin</url>
+  </scm>
   
   <properties>
     <jersey.version>1.12</jersey.version>

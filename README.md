@@ -1,7 +1,8 @@
+[![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/chatter-notifier-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/chatter-notifier-plugin)
+
 # Chatter plugin for Jenkins
 
 This is a plugin for Jenkins that will post build build results to a Chatter feed. You can configure it to post to a specific User (e.g. a build user), a specific group (e.g. a group that owns the build), or a specific record (perhaps you have a custom object that tracks build configs).
-
 
 # Build
 

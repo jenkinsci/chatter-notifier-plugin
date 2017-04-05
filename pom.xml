@@ -5,8 +5,7 @@
     <artifactId>plugin</artifactId>
     <version>1.580.1</version><!-- which version of Jenkins is this plugin built against? -->
   </parent>
-  
-  <groupId>org.jenkins-ci.plugins</groupId>
+
   <artifactId>chatter-notifier</artifactId>
   <version>2.0.3-SNAPSHOT</version>
   <packaging>hpi</packaging>
@@ -39,11 +38,18 @@
     <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
     <url>http://github.com/jenkinsci/${project.artifactId}-plugin</url>
-    <tag>v2.0.1</tag>
+    <tag>v2.0.3</tag>
   </scm>
   
   <properties>
+    <commons-httpclient.version>3.1</commons-httpclient.version>
+    <commons-io.version>2.4</commons-io.version>
+    <commons-codec.version>1.4</commons-codec.version>
+    <credentials.version>1.22</credentials.version>
+    <jackson-mapper-asl.version>1.9.2</jackson-mapper-asl.version>
     <jersey.version>1.12</jersey.version>
+    <jenkins.junit.version>1.8</jenkins.junit.version>
+    <mockito.version>2.7.21</mockito.version>
   </properties>
   
   <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
@@ -65,26 +71,26 @@
     <dependency>
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
-      <version>3.1</version>
+      <version>${commons-httpclient.version}</version>
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.4</version>
+      <version>${commons-io.version}</version>
       <type>jar</type>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.4</version>
+      <version>${commons-codec.version}</version>
     </dependency>
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-mapper-asl</artifactId>
-      <version>1.9.2</version>
+      <version>${jackson-mapper-asl.version}</version>
     </dependency>
     <dependency>
       <groupId>com.sun.jersey</groupId>
@@ -104,12 +110,18 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>credentials</artifactId>
-      <version>1.22</version>
+      <version>${credentials.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>junit</artifactId>
-      <version>1.8</version>
+      <version>${jenkins.junit.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>${mockito.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

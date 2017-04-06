@@ -5,3 +5,7 @@ work
 .settings/
 .project
 /bin/
+
+# IntelliJ
+*.iml
+.idea

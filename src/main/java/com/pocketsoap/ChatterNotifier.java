@@ -28,7 +28,6 @@ import hudson.model.BuildListener;
 import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.Hudson;
 import hudson.model.User;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
@@ -163,7 +162,10 @@ public class ChatterNotifier extends Notifier {
 		}
 
         PrintStream ps = listener.getLogger();
-		String title = "Build: " + build.getProject().getName() + " " + build.getDisplayName().replaceAll("#", "") + " is " + build.getResult().toString();
+		String buildResult = BuildResultResolver.getContextualResult(build);
+		String title = "Build: " + build.getProject().getName() + " " + build.getDisplayName().replaceAll("#", "") +
+				" is " + buildResult;
+
         String rootUrl = Jenkins.getInstance().getRootUrl();
         String url = rootUrl == null ? null : rootUrl + build.getUrl();
         

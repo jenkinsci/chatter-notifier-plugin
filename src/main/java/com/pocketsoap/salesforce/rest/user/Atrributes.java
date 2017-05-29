@@ -9,6 +9,11 @@ public class Atrributes {
 	private String type;
 	private String url;
 
+	public Atrributes(String type, String url) {
+		this.type = type;
+		this.url = url;
+	}
+
 	/**
 	 * Get the record type
 	 * @return <code>"User"</code>

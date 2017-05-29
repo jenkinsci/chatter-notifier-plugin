@@ -106,7 +106,7 @@ public class ChatterClient {
 	
 
 	private String postSuspectsComment(String postId,  Map<String, String> suspects, boolean retryOnInvalidSession)
-			throws MalformedURLException, IOException, XMLStreamException,
+			throws IOException, XMLStreamException,
 			FactoryConfigurationError {
 		URL instanceUrl = new URL(session.instanceServerUrl);
 		URL url = new URL(instanceUrl.getProtocol(),
@@ -161,12 +161,14 @@ public class ChatterClient {
 				SessionCache.get().revoke(credentials);
 				return postSuspectsComment(postId, suspects, false);
 			}
-			
-			BufferedReader r = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-			String error = "";
-			String line ;
-			while ((line = r.readLine()) != null) {
-				error += line + '\n';
+
+			StringBuffer error = new StringBuffer();
+			try (BufferedReader r = new BufferedReader(new InputStreamReader(conn.getErrorStream(), conn.getContentEncoding()))) {
+				String line;
+				while ((line = r.readLine()) != null) {
+					error.append(line);
+					error.append('\n');
+				}
 			}
 			System.out.println(error);
 			throw e;

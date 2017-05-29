@@ -25,15 +25,22 @@ public class BuildResultResolver {
      */
     public static String getContextualResult(AbstractBuild<?,?> build) {
         AbstractBuild<?, ?> previousBuild = build.getPreviousBuild();
+        Result buildResult = build.getResult();
         if (previousBuild != null) {
             if (previousBuild.getResult() == Result.FAILURE) {
-                if (build.getResult() == Result.SUCCESS) {
+                if (buildResult == Result.SUCCESS) {
                     return FIXED_STATUS;
-                } else if (build.getResult() == Result.FAILURE) {
+                } else if (buildResult == Result.FAILURE) {
                     return STILL_FAILING_STATUS;
                 }
             }
         }
-        return build.getResult().toString();
+        String buildResultString;
+        if (buildResult == null) {
+            buildResultString = "UNKNOWN";
+        } else {
+            buildResultString = buildResult.toString();
+        }
+        return buildResultString;
     }
 }

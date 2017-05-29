@@ -21,7 +21,9 @@
 
 package com.pocketsoap;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Action;
 import hudson.model.BuildListener;
@@ -148,6 +150,11 @@ public class ChatterNotifier extends Notifier {
 		return true;
 	}
 
+	@SuppressFBWarnings(value="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification="Jenkins.getInstance() is not null")
+	private Jenkins getJenkinsInstance() {
+		return Jenkins.getInstance();
+	}
+
 	/**
 	 * This method should have the logic of the plugin. Access the configuration
 	 * and execute the the actions.
@@ -156,7 +163,7 @@ public class ChatterNotifier extends Notifier {
 	public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
 		final Result result = build.getResult();
 		if (this.failureOnly && result == Result.SUCCESS) {
-			if (!this.postRecovery || build.getPreviousBuild() == null || build.getPreviousBuild().getResult() == Result.SUCCESS) {
+			if (!this.postRecovery || previousBuildIsNullOrSuccess(build)) {
 				return true;
 			}
 		}
@@ -166,7 +173,7 @@ public class ChatterNotifier extends Notifier {
 		String title = "Build: " + build.getProject().getName() + " " + build.getDisplayName().replaceAll("#", "") +
 				" is " + buildResult;
 
-        String rootUrl = Jenkins.getInstance().getRootUrl();
+        String rootUrl = getJenkinsInstance().getRootUrl();
         String url = rootUrl == null ? null : rootUrl + build.getUrl();
         
         String testHealth = null;
@@ -191,7 +198,7 @@ public class ChatterNotifier extends Notifier {
         if (this.tagSuspects && result != Result.SUCCESS) {
         	Set<User> culprits = build.getCulprits();
         	if (!culprits.isEmpty()) {
-        		suspects = new HashMap<String, String>(culprits.size());
+        		suspects = new HashMap<>(culprits.size());
         		
         		for (User culprit : culprits) {
         			final String culpritId = culprit.getId();
@@ -217,8 +224,18 @@ public class ChatterNotifier extends Notifier {
         return true;
     }
 
+	private boolean previousBuildIsNullOrSuccess(AbstractBuild<?, ?> build) {
+		AbstractBuild<?, ?> previousBuild = build.getPreviousBuild();
+		return previousBuild == null || previousBuild.getResult() == Result.SUCCESS;
+	}
+
 	public String getEnForceResults(AbstractBuild<?,?> build) throws IOException, InterruptedException {
-		String contentFile = build.getWorkspace().absolutize().getRemote() + "/build/report/coverage.json";
+		FilePath workspace = build.getWorkspace();
+		if (workspace == null) {
+			throw new IOException("Could not get a build workspace to get EnForce results");
+		}
+		String workspacePath = workspace.absolutize().getRemote();
+		String contentFile = workspacePath + "/build/report/coverage.json";
 		StringBuilder result = new StringBuilder();
 		File coverageFile = new File(contentFile);
 		if (coverageFile.exists()) {
@@ -259,7 +276,7 @@ public class ChatterNotifier extends Notifier {
 	}
 
 	private String getEnForceCoverageStatus(Double coveragePercent) {
-		String status = null;
+		String status;
 		if (coveragePercent < 75) {
 			status = "Danger";
 		} else if (coveragePercent < 80) {

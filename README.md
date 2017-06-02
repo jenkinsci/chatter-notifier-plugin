@@ -1,4 +1,4 @@
-[![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/chatter-notifier-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/chatter-notifier-plugin)
+[![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/chatter-notifier-plugin/master)](https://ci.jenkins.io/job/Plugins/chatter-notifier-plugin/master)
 
 # Chatter plugin for Jenkins
 

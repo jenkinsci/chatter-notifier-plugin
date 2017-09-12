@@ -34,4 +34,6 @@ The plugin is built with Maven, same as Jenkins itself, simply clone to repo and
 
 More details on building Jenkins plugins are available on the [Jenkins Wiki](https://wiki.jenkins-ci.org/display/JENKINS/Plugin+tutorial)
 
-
+# Proxy Configuration
+This plugin uses the proxy configuration from Manage Jenkins -> Manage Plugins -> Advanced
+The only thing that is currently not implemented is utilized is the No Proxy Hosts field.

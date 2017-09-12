@@ -21,25 +21,11 @@
 
 package com.pocketsoap.salesforce.soap;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.xml.stream.FactoryConfigurationError;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-
+import com.pocketsoap.salesforce.rest.chatter.Comment;
+import com.pocketsoap.salesforce.rest.chatter.MentionMessageSegment;
+import com.pocketsoap.salesforce.rest.chatter.MessageSegment;
+import com.pocketsoap.salesforce.rest.chatter.TextMessageSegment;
+import com.pocketsoap.salesforce.rest.user.UserService;
 import hudson.ProxyConfiguration;
 import jenkins.model.Jenkins;
 import org.apache.commons.httpclient.Credentials;
@@ -54,11 +40,21 @@ import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.MappingJsonFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import com.pocketsoap.salesforce.rest.chatter.Comment;
-import com.pocketsoap.salesforce.rest.chatter.MentionMessageSegment;
-import com.pocketsoap.salesforce.rest.chatter.MessageSegment;
-import com.pocketsoap.salesforce.rest.chatter.TextMessageSegment;
-import com.pocketsoap.salesforce.rest.user.UserService;
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * This class handles all the API calls to Salesforce/Chatter using the SOAP API.

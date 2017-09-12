@@ -32,15 +32,24 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import hudson.ProxyConfiguration;
+import jenkins.model.Jenkins;
+import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.ProxyHost;
+import org.apache.commons.httpclient.UsernamePasswordCredentials;
+import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.MappingJsonFactory;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -263,7 +272,7 @@ public class ChatterClient {
 		post.addRequestHeader("SOAPAction", "\"\"");
 		post.setRequestEntity(req);
 
-		HttpClient http = new HttpClient();
+		HttpClient http = getHttpClient(Jenkins.getInstance());
 		int sc = http.executeMethod(post);
 		if (sc != 200 && sc != 500)
 			throw new IOException("request to " + serverUrl + " returned unexpected HTTP status code of " + sc + ", check configuration.");
@@ -294,7 +303,34 @@ public class ChatterClient {
 			}
 		}
 	}
-	
+
+	/**
+	 * Set up HttpClient based on Jenkins proxy values. Set up proxy host, port, username, and password.
+	 * TODO: Handle noProxyHosts
+	 *
+	 * @param jenkins typically Jenkins.getInstance(). Null check is included
+	 * @return configured HttpClient with proxy configuration.
+	 */
+	static HttpClient getHttpClient(Jenkins jenkins) {
+		HttpClient http = new HttpClient();
+		if (jenkins != null) {
+			ProxyConfiguration proxyConfiguration = jenkins.proxy;
+			if (proxyConfiguration != null && StringUtils.isNotEmpty(proxyConfiguration.name)) {
+				ProxyHost proxyHost = new ProxyHost(proxyConfiguration.name, proxyConfiguration.port);
+				http.getHostConfiguration().setProxyHost(proxyHost);
+				if (StringUtils.isNotEmpty(proxyConfiguration.getUserName())) {
+					AuthScope authScope = new AuthScope(proxyConfiguration.name, proxyConfiguration.port);
+					Credentials credentials =
+							new UsernamePasswordCredentials(
+									proxyConfiguration.getUserName(),
+									proxyConfiguration.getPassword());
+					http.getState().setProxyCredentials(authScope, credentials);
+				}
+			}
+		}
+		return http;
+	}
+
 	// read a soap fault message and turn it into an exception
 	private RuntimeException handleSoapFault(XMLStreamReader rdr) throws XMLStreamException {
 		String fc = null, fs = null;

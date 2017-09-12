@@ -32,6 +32,12 @@
       <name>Stephanie Ortiz</name>
       <email>sortiz@salesforce.com</email>
     </developer>
+
+    <developer>
+      <id>justinharringa</id>
+      <name>Justin Harringa</name>
+      <email>jharringa@salesforce.com</email>
+    </developer>
   </developers>
   
   <scm>

@@ -6,6 +6,8 @@ import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+import hudson.model.FreeStyleProject;
+import hudson.model.Item;
 import hudson.util.ListBoxModel;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -21,7 +23,8 @@ import java.util.Collections;
  * @author sortiz
  */
 public class ChatterNotifierTest {
-	
+
+	public static final String TEST_PROJECT = "testproject";
 	@Rule
 	public JenkinsRule jenkins = new JenkinsRule();
 	
@@ -49,16 +52,18 @@ public class ChatterNotifierTest {
 		Assert.assertNull(foundCreds);
 	}
 	
-	@Test public void testListBoxReturnsUsernamePassword() {
+	@Test public void testListBoxReturnsUsernamePassword() throws IOException{
 		//Create a few dummy creds
 		UsernamePasswordCredentialsImpl userPass1 = createFakeCredentials();
+		jenkins.jenkins.createProject(FreeStyleProject.class, TEST_PROJECT);
+		Item item = jenkins.jenkins.getItem(TEST_PROJECT);
 		//TODO: Add non-usernamepassword creds
 		
 		//Add to jenkins
 		insertCredentials(userPass1);
 		
 		ChatterNotifier.DescriptorImpl descriptor = new ChatterNotifier.DescriptorImpl();
-		ListBoxModel listBox = descriptor.doFillCredentialsIdItems();
+		ListBoxModel listBox = descriptor.doFillCredentialsIdItems(item);
 		Assert.assertTrue(listBox.size() > 0);	//Theres at least 1 empty item in there
 	}
 	

@@ -25,12 +25,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.Action;
-import hudson.model.BuildListener;
-import hudson.model.Result;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.User;
+import hudson.model.*;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
@@ -48,15 +43,13 @@ import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import jenkins.model.Jenkins;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -68,6 +61,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.pocketsoap.salesforce.soap.ChatterClient;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 /**
  * @author superfell
@@ -360,13 +354,27 @@ public class ChatterNotifier extends Notifier {
 			}
 			return FormValidation.ok();
 		}
-		
+
+		/**
+		 * Returns true if the current user doesn't have Job CONFIGURE permission for the given {@link Item}
+		 * @return user doesn't have Job CONFIGURE permission for the given {@link Item}
+		 */
+		private boolean isUserUnauthorizedForConfigure(Item item) {
+			return item == null || !item.hasPermission(Job.CONFIGURE);
+		}
+
+		@RequirePOST
 		public FormValidation doTestConnection(
 				@QueryParameter("username") String username,
 				@QueryParameter("password") String password,
 				@QueryParameter("recordId") String recordId,
 				@QueryParameter("server") String server, 
-				@QueryParameter("credentialsId") String credentialsId) {
+				@QueryParameter("credentialsId") String credentialsId,
+				@AncestorInPath Item item) {
+
+			if (isUserUnauthorizedForConfigure(item)) {
+				return FormValidation.error("Access denied: You're not logged in or do not have adequate permissions");
+			}
 
 			try {
 				if (credentialsId.length() > 0) {
@@ -403,9 +411,13 @@ public class ChatterNotifier extends Notifier {
 		
 		/**
 		 * Populate the credentials dropdown box
+		 * @param item The ancestor item which we should check for configure permissions
 		 * @return A ListBoxModel containing all global credentials
 		 */
-		public ListBoxModel doFillCredentialsIdItems() {
+		public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item) {
+			if (isUserUnauthorizedForConfigure(item)) {
+				return new ListBoxModel();
+			}
 			return new StandardListBoxModel()
 	            .withEmptySelection()
 	            .withMatching(

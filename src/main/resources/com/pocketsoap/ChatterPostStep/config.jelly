@@ -11,20 +11,22 @@
     When submitted, it will be passed to the corresponding constructor parameter.
   -->
   <f:entry title="Credentials Id" field="credentialsId" name="credentialsId">
-	  	<f:select />
-	  </f:entry>
-  <f:entry title="recordId" field="recordId">
+    <f:select />
+  </f:entry>
+  <f:entry title="Body of Chatter Post" field="body">
     <f:textbox />
   </f:entry>
-  <f:entry title="title" field="title">
+  <f:entry title="recordId (optional)" field="recordId">
     <f:textbox />
   </f:entry>
-  <f:entry title="body" field="body">
-    <f:textbox />
-  </f:entry>
-  <f:entry title="Override Login Server" field="server">
-    <f:textbox />
-  </f:entry>
+  <f:advanced>
+      <f:entry title="Override Login Server (optional)" field="server">
+        <f:textbox />
+      </f:entry>
+      <f:entry title="Build Url Title (optional)" field="buildUrlTitle">
+        <f:textbox />
+      </f:entry>
+  </f:advanced>
   <f:validateButton
    title="Verify Settings" progress="Verifying Settings ..."
    method="testConnection" with="credentialsId,recordId,server" />

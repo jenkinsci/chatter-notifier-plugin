@@ -12,6 +12,7 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import jenkins.tasks.SimpleBuildStep;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -25,14 +26,13 @@ import java.io.PrintStream;
 
 public class ChatterPostStep extends Builder implements SimpleBuildStep {
     // Optional
-    private String recordId, server;
+    private String recordId, server, buildUrlTitle;
     // Required
-    private final String credentialsId, title, body;
+    private final String credentialsId, body;
 
     @DataBoundConstructor
-    public ChatterPostStep(@Nonnull String credentialsId, @Nonnull String title, @Nonnull String body) {
+    public ChatterPostStep(@Nonnull String credentialsId, @Nonnull String body) {
         this.credentialsId = credentialsId;
-        this.title = title;
         this.body = body;
     }
 
@@ -42,8 +42,13 @@ public class ChatterPostStep extends Builder implements SimpleBuildStep {
     }
 
     @Nonnull
-    public String getTitle() {
-        return title;
+    public String getBuildUrlTitle() {
+        return buildUrlTitle;
+    }
+
+    @DataBoundSetter
+    public void setBuildUrlTitle(String buildUrlTitle) {
+        this.buildUrlTitle = buildUrlTitle;
     }
 
     @Nonnull
@@ -77,9 +82,10 @@ public class ChatterPostStep extends Builder implements SimpleBuildStep {
 
         try {
             UsernamePasswordCredentials c = ChatterNotifier.getCredentialsById(credentialsId);
+            String buildUrlTitle = StringUtils.isEmpty(this.buildUrlTitle) ? run.toString() : this.buildUrlTitle;
             new ChatterClient(c.getUsername(), Secret.toString(c.getPassword()), server)
-                    .postText(recordId, title, body, resultsUrl);
-            ps.print(String.format("Posting to Chatter with title=%s, body=%s at recordId=%s\n", title, body, recordId));
+                    .postText(recordId, buildUrlTitle, body, resultsUrl);
+            ps.print(String.format("Posting to Chatter with body=%s at recordId=%s\n", body, recordId));
         } catch (Exception ex) {
             ps.print(String.format("error posting to chatter : %s\n", ex.getMessage()));
         }

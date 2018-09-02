@@ -33,8 +33,10 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.ProxyHost;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
+import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
+import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.MappingJsonFactory;
@@ -327,6 +329,7 @@ public class ChatterClient {
 	 */
 	static HttpClient getHttpClient(Jenkins jenkins) {
 		HttpClient http = new HttpClient();
+		http.getParams().setParameter(HttpClientParams.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
 		if (jenkins != null) {
 			ProxyConfiguration proxyConfiguration = jenkins.proxy;
 			if (proxyConfiguration != null && StringUtils.isNotEmpty(proxyConfiguration.name)) {

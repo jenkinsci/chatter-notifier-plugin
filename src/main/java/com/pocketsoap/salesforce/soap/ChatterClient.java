@@ -83,12 +83,30 @@ public class ChatterClient {
 		if (!r.success)
 			throw new SaveResultException(r);
 	}
-	
+
+	public String postText(String recordId, String title, String body, String resultsUrl) throws IOException, XMLStreamException, FactoryConfigurationError {
+		establishSession();
+
+		String pid = recordId == null || recordId.length() == 0 ? session.userId : recordId;
+		try {
+			return createSoapFeedPost(pid, title, resultsUrl, body);
+		} catch (SoapFaultException ex) {
+			// if we were using a cached session, then it could have expired
+			// by now, so we check for INVALID_SESSION, and if we see that
+			// error, we'll flush the session cache and try again.
+			if (ex.getFaultCode().toLowerCase().contains("session")) {
+				SessionCache.get().revoke(credentials);
+				return postText(recordId, title, resultsUrl, body);
+			}
+			throw ex;
+		}
+	}
+
 	private String postBuild(String recordId, String title, String resultsUrl, String testHealth, Map<String, String> suspects, boolean retryOnInvalidSession) throws IOException, XMLStreamException, FactoryConfigurationError {
 		establishSession();
 		String body = testHealth == null ? title : title + "\n" + testHealth;
 		if (body.length() > 1000) body = body.substring(0, 998) + "\u2026";	// ...
-		
+
 
 		String pid = recordId == null || recordId.length() == 0 ? session.userId : recordId;
 		try {
@@ -98,7 +116,7 @@ public class ChatterClient {
 			}
 			return postId;
 		} catch (SoapFaultException ex) {
-			// if we were using a cached session, then it could of expired
+			// if we were using a cached session, then it could have expired
 			// by now, so we check for INVALID_SESSION, and if we see that
 			// error, we'll flush the session cache and try again.
 			if (retryOnInvalidSession && ex.getFaultCode().toLowerCase().contains("session")) {
@@ -108,7 +126,7 @@ public class ChatterClient {
 			throw ex;
 		}
 	}
-	
+
 
 	private String postSuspectsComment(String postId,  Map<String, String> suspects, boolean retryOnInvalidSession)
 			throws IOException, XMLStreamException,

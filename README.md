@@ -30,7 +30,7 @@ Test Result: 0 tests failing out of a total of 3,276 tests.
 
 # Build
 
-The plugin is built with Maven, same as Jenkins itself, simply clone to repo and run mvn install, the generated plugin ChatterPlugin.hdi will be in the target directory.
+The plugin is built with Maven, same as Jenkins itself, simply clone to repo and run mvn install, the generated plugin ChatterPlugin.hpi will be in the target directory.
 
 More details on building Jenkins plugins are available on the [Jenkins Wiki](https://wiki.jenkins-ci.org/display/JENKINS/Plugin+tutorial)
 

@@ -85,9 +85,9 @@ public class ChatterPostStep extends Builder implements SimpleBuildStep {
             String buildUrlTitle = StringUtils.isEmpty(this.buildUrlTitle) ? run.toString() : this.buildUrlTitle;
             new ChatterClient(c.getUsername(), Secret.toString(c.getPassword()), server)
                     .postText(recordId, buildUrlTitle, body, resultsUrl);
-            ps.print(String.format("Posting to Chatter with body=%s at recordId=%s\n", body, recordId));
+            ps.print(String.format("Posting to Chatter with body=%s at recordId=%s%n", body, recordId));
         } catch (Exception ex) {
-            ps.print(String.format("error posting to chatter : %s\n", ex.getMessage()));
+            ps.print(String.format("error posting to chatter : %s%n", ex.getMessage()));
         }
 
     }

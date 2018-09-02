@@ -25,9 +25,9 @@ public class QueryService {
 	
 	/**
 	 * Do a SOQL query via REST
-	 * @param <T>
 	 * @param session The session including the URL and the sid
 	 * @param query The query to run
+	 * @param recordClass The record class to query
 	 * @return The query response
 	 * @throws IOException If something goes awry
 	 */

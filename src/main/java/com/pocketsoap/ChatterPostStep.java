@@ -24,6 +24,12 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintStream;
 
+/**
+ * This class allows the user to post to Chatter as a build step in
+ * either FreeStyle Jobs or Pipeline jobs.
+ *
+ * @author justinharringa
+ */
 public class ChatterPostStep extends Builder implements SimpleBuildStep {
     // Optional
     private String recordId, server, buildUrlTitle;

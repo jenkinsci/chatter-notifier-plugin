@@ -89,9 +89,10 @@ public class ChatterClient {
 	public String postText(String recordId, String title, String body, String resultsUrl) throws IOException, XMLStreamException, FactoryConfigurationError {
 		establishSession();
 
-		String pid = recordId == null || recordId.length() == 0 ? session.userId : recordId;
+		String trimmedRecordId = StringUtils.trim(recordId);
+		String recordIdForPost = StringUtils.isEmpty(trimmedRecordId) ? session.userId : trimmedRecordId;
 		try {
-			return createSoapFeedPost(pid, title, resultsUrl, body);
+			return createSoapFeedPost(recordIdForPost, title, resultsUrl, body);
 		} catch (SoapFaultException ex) {
 			// if we were using a cached session, then it could have expired
 			// by now, so we check for INVALID_SESSION, and if we see that

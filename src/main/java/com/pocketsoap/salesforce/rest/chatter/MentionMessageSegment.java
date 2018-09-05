@@ -31,7 +31,7 @@ public class MentionMessageSegment implements MessageSegment {
 
 	/**
 	 * Get the mentioned user's ID
-	 * @return
+	 * @return user's ID
 	 */
 	@JsonProperty(value="id")
 	public String getUserId() {
@@ -39,8 +39,8 @@ public class MentionMessageSegment implements MessageSegment {
 	}
 
 	/**
-	 * Set the mentioned user's id
-	 * @param userId
+	 * Set the mentioned user's ID
+	 * @param userId user's ID
 	 */
 	public void setUserId(String userId) {
 		this.userId = userId;

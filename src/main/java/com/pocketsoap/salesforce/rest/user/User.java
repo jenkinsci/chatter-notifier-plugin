@@ -15,7 +15,7 @@ public class User {
 	
 	/**
 	 * Get attributes about the User record
-	 * @return
+	 * @return User record attributes
 	 */
 	public Atrributes getAttributes() {
 		return attributes;

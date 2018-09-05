@@ -98,6 +98,7 @@ public class ChatterNotifier extends Notifier {
 
 	/**
 	 * We'll use this from the <tt>config.jelly</tt>.
+	 * @return credentialsId
 	 */
 	public String getCredentialsId() {
 		return credentialsId;
@@ -144,11 +145,6 @@ public class ChatterNotifier extends Notifier {
 		return true;
 	}
 
-	@SuppressFBWarnings(value="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", justification="Jenkins.getInstance() is not null")
-	private Jenkins getJenkinsInstance() {
-		return Jenkins.getInstance();
-	}
-
 	/**
 	 * This method should have the logic of the plugin. Access the configuration
 	 * and execute the the actions.
@@ -167,8 +163,7 @@ public class ChatterNotifier extends Notifier {
 		String title = "Build: " + build.getProject().getName() + " " + build.getDisplayName().replaceAll("#", "") +
 				" is " + buildResult;
 
-        String rootUrl = getJenkinsInstance().getRootUrl();
-        String url = rootUrl == null ? null : rootUrl + build.getUrl();
+        String url = JenkinsUtils.getRunUrl(build);
         
         String testHealth = null;
         AbstractTestResultAction<?> tr = build.getAction(AbstractTestResultAction.class);

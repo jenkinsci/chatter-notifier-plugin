@@ -13,11 +13,11 @@
   <f:entry title="Credentials Id" field="credentialsId" name="credentialsId">
     <f:select />
   </f:entry>
-  <f:entry title="Body of Chatter Post" field="body">
-    <f:textbox />
-  </f:entry>
   <f:entry title="recordId (optional)" field="recordId">
     <f:textbox />
+  </f:entry>
+  <f:entry title="Body of Chatter Post" field="body">
+    <f:textarea />
   </f:entry>
   <f:advanced>
       <f:entry title="Override Login Server (optional)" field="server">

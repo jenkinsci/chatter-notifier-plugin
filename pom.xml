@@ -12,7 +12,7 @@
   
   <name>Chatter Notifier Plugin</name>
   <description>Post build results or arbitrary text to Chatter</description>
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/Chatter+Notifier+Plugin</url>
+  <url>https://github.com/jenkinsci/chatter-notifier-plugin</url>
   <licenses>
     <license>
       <name>MIT License</name>

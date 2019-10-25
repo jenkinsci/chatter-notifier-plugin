@@ -5,5 +5,5 @@
   Since we don't really have anything dynamic here, let's just use static HTML. 
 -->
 <div>
-  This plugin can be configured to post build results to a Chatter feed or to send a buildUrlTitle/body as a build step.
+  This plugin can be configured to post build results to a Chatter feed or to send custom text as a build/pipeline step.
 </div>

@@ -1,23 +1,58 @@
 [![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/chatter-notifier-plugin/master)](https://ci.jenkins.io/job/Plugins/job/chatter-notifier-plugin/job/master/)
+[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/chatter-notifier.svg)](https://plugins.jenkins.io/chatter-notifier)
+[![GitHub release](https://img.shields.io/github/release/jenkinsci/chatter-notifier-plugin.svg?label=changelog)](https://github.com/jenkinsci/chatter-notifier-plugin/releases/latest)
+[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/chatter-notifier.svg?color=blue)](https://plugins.jenkins.io/chatter-notifier)
 
 # Chatter plugin for Jenkins
 
-This is a plugin for Jenkins that will post build results to a Chatter feed or arbitrary text from a build step. 
+This is a plugin for Jenkins that will post build results to a [Salesforce
+Chatter](http://www.salesforce.com/chatter/overview/) feed or arbitrary text from a build step.
 You can configure it to post to a specific User (e.g. a build user), a specific group (e.g. a group that owns the build), 
 or a specific record (perhaps you have a custom object that tracks build configs).
 
+# Security Vulnerability Before 2.0.4
+Older versions of this plugin may not be safe to use. Please review the
+following warnings before using a version before `2.0.4`:
+
+- [Unprivileged users with Overall/Read access are able to enumerate credential IDs](https://jenkins.io/security/advisory/2018-09-25/#SECURITY-1050%20%282%29)
+- [CSRF vulnerability and missing permission checks allowed capturing credentials](https://jenkins.io/security/advisory/2018-09-25/#SECURITY-1050%20%281%29)
+
 # Install
 
-The plugin is available via the main Jenkins plugin distribution, so goto the manage Jenkins page, manage plugins, and then the available tab and search for Chatter Notifier and pick
+The plugin is available via the main Jenkins plugin distribution, so go to the manage Jenkins page, manage plugins, and then the available tab and search for Chatter Notifier and pick
 the option to install it.
 
 # Configure
 
+## Credential Configuration
+Create new credentials of the kind "Username with Password"
+*  Remember to include your users API security token if needed as part of the password
+
+![Jenkins Credentials Example](images/jenkins-credentials.png)
+
+## Freestyle Job Creation / Update
+1.  Add post-build action -\> Chatter Results **or** Add build
+    step → Post to Chatter
+2.  Populate the fields as needed (see the inline help for more
+    details):
+    *  Credentials (use the central Jenkins credentials tool to create one)
+    *  Optional server URL to login to
+    *  Record id (record, user, or group) to post results to that specific record (or group)
+        (leave this blank to post to the user's wall)
+
+## Add a step to a Pipeline Job:
+Configure a step within the context of a node. See the
+[Jenkins Snippet Generator](https://jenkins.io/doc/book/pipeline/getting-started/#snippet-generator)
+for more information.
+
+Example: 
+```jenkinsfile
+chatterPost body: "This is a Chatter post from a pipeline! ${env.JOB_NAME} ${env.BUILD_DISPLAY_NAME}", credentialsId: 'JENKINS_CREDENTIAL_ID', recordId: 'SOME_RECORD_ID'
+```
+
 ## Send Build Results to Chatter
 With the plug-in installed, and the server restarted, the build configuration page will now have an extra Post-Build 
-option `Chatter Results`, if you select this, then you can populate the 4 fields as need 
-(credentials (use the central Jenkins credentials tool to create one), and the recordId to post the results to, leave 
-this blank to post to the users wall, or enter a record Id to post to that specific record (or group)).
+option `Chatter Results`, if you select this, then
 
 ![build feed](http://www.pocketsoap.com/weblog/hc.png)
 
@@ -38,7 +73,9 @@ pipelines. You can post any arbitrary body to the feed of your Chatter user or t
 of any recordId (e.g. Chatter group).
 
 ### Example
-Sample pipeline configuration (see the snippet generator for more help getting your credentialsId):
+Sample pipeline configuration (see the
+[Jenkins Snippet Generator](https://jenkins.io/doc/book/pipeline/getting-started/#snippet-generator)
+for more help getting your credentialsId):
 ```
 node {
   chatterPost body: "This is a Chatter post from a pipeline! ${env.JOB_NAME} ${env.BUILD_DISPLAY_NAME}", credentialsId: 'JENKINS_CREDENTIAL_ID', recordId: 'SOME_RECORD_ID'

@@ -1,0 +1,3 @@
+_extends: .github
+tag-template: chatter-notifier-$NEXT_MINOR_VERSION
+version-template: $MAJOR.$MINOR.$PATCH

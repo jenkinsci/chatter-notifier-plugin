@@ -6,7 +6,7 @@
 # Chatter plugin for Jenkins
 
 This is a plugin for Jenkins that will post build results to a [Salesforce
-Chatter](http://www.salesforce.com/chatter/overview/) feed or arbitrary text from a build step.
+Chatter](https://www.salesforce.com/chatter/overview/) feed or arbitrary text from a build step.
 You can configure it to post to a specific User (e.g. a build user), a specific group (e.g. a group that owns the build), 
 or a specific record (perhaps you have a custom object that tracks build configs).
 
@@ -54,7 +54,7 @@ chatterPost body: "This is a Chatter post from a pipeline! ${env.JOB_NAME} ${env
 With the plug-in installed, and the server restarted, the build configuration page will now have an extra Post-Build 
 option `Chatter Results`, if you select this, then
 
-![build feed](http://www.pocketsoap.com/weblog/hc.png)
+![build feed](https://www.pocketsoap.com/weblog/hc.png)
 
 ### Publish Enforce coverage results
 

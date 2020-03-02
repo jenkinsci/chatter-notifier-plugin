@@ -53,7 +53,7 @@
     <commons-codec.version>1.4</commons-codec.version>
     <credentials.version>1.22</credentials.version>
     <jackson-mapper-asl.version>1.9.2</jackson-mapper-asl.version>
-    <jersey.version>1.12</jersey.version>
+    <jersey.version>1.19.4</jersey.version>
     <jenkins.version>2.60.3</jenkins.version>
     <jenkins.junit.version>1.24</jenkins.junit.version>
     <jenkins.workflow-api.version>2.24</jenkins.workflow-api.version>

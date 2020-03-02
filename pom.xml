@@ -48,7 +48,7 @@
   </scm>
   
   <properties>
-    <commons-httpclient.version>3.1</commons-httpclient.version>
+    <commons-httpclient.version>3.1-jenkins-1</commons-httpclient.version>
     <commons-io.version>2.4</commons-io.version>
     <commons-codec.version>1.4</commons-codec.version>
     <credentials.version>1.22</credentials.version>

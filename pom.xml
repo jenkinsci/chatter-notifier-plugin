@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>2.11</version>
+    <version>3.57</version>
   </parent>
 
   <artifactId>chatter-notifier</artifactId>
@@ -48,16 +48,17 @@
   </scm>
   
   <properties>
-    <commons-httpclient.version>3.1</commons-httpclient.version>
-    <commons-io.version>2.4</commons-io.version>
-    <commons-codec.version>1.4</commons-codec.version>
+    <commons-httpclient.version>3.1-jenkins-1</commons-httpclient.version>
+    <commons-io.version>2.6</commons-io.version>
+    <commons-codec.version>1.9</commons-codec.version>
     <credentials.version>1.22</credentials.version>
+    <java.level>8</java.level>
     <jackson-mapper-asl.version>1.9.2</jackson-mapper-asl.version>
-    <jersey.version>1.12</jersey.version>
-    <jenkins.version>2.60.3</jenkins.version>
-    <jenkins.junit.version>1.24</jenkins.junit.version>
-    <jenkins.workflow-api.version>2.24</jenkins.workflow-api.version>
-    <jenkins-test-harness.version>2.13</jenkins-test-harness.version>
+    <jersey.version>1.19.4</jersey.version>
+    <jenkins.version>2.164.1</jenkins.version>
+    <jenkins.junit.version>1.28</jenkins.junit.version>
+    <jenkins.workflow-api.version>2.40</jenkins.workflow-api.version>
+    <jenkins-test-harness.version>2.62</jenkins-test-harness.version>
     <mockito.version>2.7.21</mockito.version>
     <structs-plugin>1.10</structs-plugin>
   </properties>

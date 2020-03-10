@@ -59,7 +59,7 @@
     <jenkins.junit.version>1.28</jenkins.junit.version>
     <jenkins.workflow-api.version>2.40</jenkins.workflow-api.version>
     <jenkins-test-harness.version>2.62</jenkins-test-harness.version>
-    <mockito.version>2.7.21</mockito.version>
+    <mockito.version>3.3.1</mockito.version>
     <structs-plugin>1.10</structs-plugin>
   </properties>
   

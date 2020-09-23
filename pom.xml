@@ -51,7 +51,7 @@
     <commons-httpclient.version>3.1-jenkins-1</commons-httpclient.version>
     <commons-io.version>2.7</commons-io.version>
     <commons-codec.version>1.15</commons-codec.version>
-    <credentials.version>1.22</credentials.version>
+    <credentials.version>2.3.13</credentials.version>
     <java.level>8</java.level>
     <jackson-mapper-asl.version>1.9.13-atlassian-2</jackson-mapper-asl.version>
     <jersey.version>1.19.4</jersey.version>

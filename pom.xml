@@ -56,7 +56,7 @@
     <jackson-mapper-asl.version>1.9.13-atlassian-2</jackson-mapper-asl.version>
     <jersey.version>1.19.4</jersey.version>
     <jenkins.version>2.164.1</jenkins.version>
-    <jenkins.junit.version>1.28</jenkins.junit.version>
+    <jenkins.junit.version>1.52</jenkins.junit.version>
     <jenkins.workflow-api.version>2.40</jenkins.workflow-api.version>
     <jenkins-test-harness.version>2.62</jenkins-test-harness.version>
     <mockito.version>3.11.2</mockito.version>
